@@ -88,10 +88,9 @@ func getKey(b []byte) int {
 		}
 	}
 	// Displayable characters.
-	for c := byte(0x21); c <= 0x7e; c += 0x01 {
-		if len(b) == 1 && b[0] == c {
-			return displayable
-		}
+	if len(b) == 1 && 0x21 <= b[0] && b[0] <= 0x7e {
+		return displayable
 	}
+
 	return ignore
 }
