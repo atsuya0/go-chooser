@@ -6,10 +6,12 @@ import (
 )
 
 const (
-	formatSelectedSuggestion = "\x1b[37m\x1b[1m%s\x1b[39m\x1b[0m"
+	prefix                   = ">>> "
+	selectedSuggestionFormat = "\x1b[1;37m%s\x1b[m"
 )
 
 type render struct {
+	prefix     string
 	buffer     *buffer
 	completion *completion
 	winSize    *winSize
@@ -28,7 +30,7 @@ func (r *render) clear() {
 }
 
 func (r *render) renderBuffer() {
-	fmt.Println(r.buffer.text)
+	fmt.Println(r.prefix + r.buffer.text)
 }
 
 func (r *render) renderSuggestions() {
@@ -38,12 +40,16 @@ func (r *render) renderSuggestions() {
 	suggestions := make([]string, r.completion.length())
 	copy(suggestions, r.completion.suggestions)
 	suggestions[r.completion.target] =
-		fmt.Sprintf(formatSelectedSuggestion, suggestions[r.completion.target])
+		fmt.Sprintf(selectedSuggestionFormat, suggestions[r.completion.target])
 	fmt.Print(strings.Join(suggestions, "\n"))
 }
 
+func (r *render) cursorColPosition() int {
+	return r.buffer.cursorPosition + len(r.prefix) + 1
+}
+
 func (r *render) restoreCursorPosition() {
-	fmt.Printf("\x1b[%dA\x1b[%dG", r.completion.length(), r.buffer.cursorPosition+1)
+	fmt.Printf("\x1b[%dA\x1b[%dG", r.completion.length(), r.cursorColPosition())
 }
 
 func (r *render) render() {
@@ -56,5 +62,6 @@ func (r *render) render() {
 func newRender() *render {
 	return &render{
 		buffer: newBuffer(),
+		prefix: prefix,
 	}
 }
