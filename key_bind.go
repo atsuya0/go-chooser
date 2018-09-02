@@ -4,22 +4,34 @@ var keyBindCmds = map[int]func(*buffer){
 	delete: func(b *buffer) {
 		b.deleteChar()
 	},
+	controlD: func(b *buffer) {
+		b.deleteChar()
+	},
 	backspace: func(b *buffer) {
-		b.deleteBeforeChar()
+		b.backwardDeleteChar()
+	},
+	controlH: func(b *buffer) {
+		b.backwardDeleteChar()
 	},
 	controlF: func(b *buffer) {
-		b.goRightChar()
+		b.forwardChar()
 	},
 	controlB: func(b *buffer) {
-		b.goLeftChar()
+		b.backwardChar()
 	},
 	controlA: func(b *buffer) {
-		b.goLineBeginning()
+		b.beginningOfLine()
 	},
 	controlE: func(b *buffer) {
-		b.goLineEnd()
+		b.endOfLine()
 	},
 	controlU: func(b *buffer) {
 		b.backwardKillLine()
+	},
+	controlK: func(b *buffer) {
+		b.killLine()
+	},
+	controlW: func(b *buffer) {
+		b.backwardKillWord()
 	},
 }
