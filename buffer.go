@@ -20,7 +20,7 @@ func (b *buffer) isConvertRune() []rune {
 func (b *buffer) insert(char string) {
 	runeText := b.isConvertRune()
 	b.text = string(runeText[:b.cursorPosition]) + char + string(runeText[b.cursorPosition:])
-	b.goRightChar()
+	b.forwardChar()
 }
 
 func (b *buffer) del(idx int) {
@@ -29,50 +29,116 @@ func (b *buffer) del(idx int) {
 }
 
 func (b *buffer) deleteChar() {
-	if b.length() <= b.cursorPosition {
+	if b.cursorPositionIsAtTheEnd() {
 		return
 	}
 	b.del(b.cursorPosition)
-
-	if b.length() <= b.cursorPosition {
-		b.goLeftChar()
-	}
 }
 
-func (b *buffer) deleteBeforeChar() {
-	if b.cursorPosition-1 < 0 {
+func (b *buffer) backwardDeleteChar() {
+	if b.cursorPositionIsAtTheBeginning() {
 		return
 	}
 	b.del(b.cursorPosition - 1)
-	b.goLeftChar()
+	b.backwardChar()
 }
 
-func (b *buffer) goLineBeginning() {
-	b.cursorPosition = 0
-}
-
-func (b *buffer) goLineEnd() {
-	b.cursorPosition = b.length()
-}
-
-func (b *buffer) goRightChar() {
-	if b.length() <= b.cursorPosition {
-		return
-	}
-	b.cursorPosition += 1
-}
-
-func (b *buffer) goLeftChar() {
-	if b.cursorPosition <= 0 {
-		return
-	}
-	b.cursorPosition -= 1
+func (b *buffer) killLine() {
+	runeText := b.isConvertRune()
+	b.text = string(runeText[:b.cursorPosition])
 }
 
 func (b *buffer) backwardKillLine() {
 	runeText := b.isConvertRune()
 	b.text = string(runeText[b.cursorPosition:])
 	b.cursorPosition = 0
+}
+
+func (b *buffer) backwardKillWord() {
+	spacePosition := b.lastIndex(" ", b.cursorPosition-1)
+	if spacePosition < 0 {
+		b.backwardKillLine()
+		return
+	}
+	runeText := b.isConvertRune()
+	b.text = string(runeText[:spacePosition+1]) + string(runeText[b.cursorPosition:])
+	b.cursorPosition = spacePosition + 1
+}
+
+func (b *buffer) beginningOfLine() {
+	b.cursorPosition = 0
+}
+
+func (b *buffer) endOfLine() {
+	b.cursorPosition = b.length()
+}
+
+func (b *buffer) forwardChar() {
+	if b.cursorPositionIsAtTheEnd() {
+		return
+	}
+	b.cursorPosition += 1
+}
+
+func (b *buffer) backwardChar() {
+	if b.cursorPositionIsAtTheBeginning() {
+		return
+	}
+	b.cursorPosition -= 1
+}
+
+func (b *buffer) indexOfTextFromCursor(substr string) int {
+	if b.cursorPositionIsAtTheEnd() {
+		return -1
+	}
+	return b.index(substr, b.cursorPosition)
+}
+
+func (b *buffer) index(substr string, beginningPoint int) int {
+	if b.length() <= beginningPoint {
+		return -1
+	}
+	runeText := b.isConvertRune()
+	for i := beginningPoint; i < b.length(); i++ {
+		if string(runeText[i]) == substr {
+			return i
+		}
+	}
+	return -1
+}
+
+func (b *buffer) lastIndexOfTextUpToCursor(substr string) int {
+	if b.cursorPositionIsAtTheBeginning() {
+		return -1
+	}
+	return b.lastIndex(substr, b.cursorPosition)
+}
+
+func (b *buffer) lastIndex(substr string, endPoint int) int {
+	if endPoint <= 0 {
+		return -1
+	}
+	runeText := b.isConvertRune()
+	for i := endPoint - 1; 0 <= i; i-- {
+		if string(runeText[i]) == substr {
+			return i
+		}
+	}
+	return -1
+}
+
+func (b *buffer) cursorPositionIsAtTheBeginning() bool {
+	if b.cursorPosition <= 0 {
+		return true
+	}
+	return false
+}
+
+func (b *buffer) cursorPositionIsAtTheEnd() bool {
+	if b.length() <= b.cursorPosition {
+		return true
+	}
+	return false
 }
 
 func (b *buffer) init() {
