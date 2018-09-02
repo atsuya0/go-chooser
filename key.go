@@ -87,8 +87,8 @@ func getKey(b []byte) int {
 			return key.key
 		}
 	}
-	// Displayable characters.
-	if len(b) == 1 && 0x21 <= b[0] && b[0] <= 0x7e {
+	// Displayable characters.(space and graphic character.)
+	if len(b) == 1 && 0x20 <= b[0] && b[0] <= 0x7e {
 		return displayable
 	}
 
