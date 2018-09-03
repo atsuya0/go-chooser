@@ -2,10 +2,10 @@ package selector
 
 var keyBindCmds = map[int]func(*buffer){
 	delete: func(b *buffer) {
-		b.deleteChar()
+		b.deleteCharOnCursor()
 	},
 	controlD: func(b *buffer) {
-		b.deleteChar()
+		b.deleteCharOnCursor()
 	},
 	backspace: func(b *buffer) {
 		b.backwardDeleteChar()

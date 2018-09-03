@@ -17,29 +17,34 @@ func (b *buffer) isConvertRune() []rune {
 	return []rune(b.text)
 }
 
+func (b *buffer) setBuffer(text string) {
+	b.text = text
+	b.cursorPosition = len(text)
+}
+
 func (b *buffer) insert(char string) {
 	runeText := b.isConvertRune()
 	b.text = string(runeText[:b.cursorPosition]) + char + string(runeText[b.cursorPosition:])
 	b.forwardChar()
 }
 
-func (b *buffer) del(idx int) {
+func (b *buffer) deleteChar(idx int) {
 	runeText := b.isConvertRune()
 	b.text = string(runeText[:idx]) + string(runeText[idx+1:])
 }
 
-func (b *buffer) deleteChar() {
+func (b *buffer) deleteCharOnCursor() {
 	if b.cursorPositionIsAtTheEnd() {
 		return
 	}
-	b.del(b.cursorPosition)
+	b.deleteChar(b.cursorPosition)
 }
 
 func (b *buffer) backwardDeleteChar() {
 	if b.cursorPositionIsAtTheBeginning() {
 		return
 	}
-	b.del(b.cursorPosition - 1)
+	b.deleteChar(b.cursorPosition - 1)
 	b.backwardChar()
 }
 
