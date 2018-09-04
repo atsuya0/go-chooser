@@ -1,6 +1,6 @@
-# selector
+# go-choice
 
-selector.Run([]string) -> string
+chooser.Run([]string) -> string
 
 ```go
 package main
