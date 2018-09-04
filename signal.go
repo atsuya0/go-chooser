@@ -1,4 +1,4 @@
-package selector
+package choice
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-func (s *selector) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh chan struct{}) {
+func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh chan struct{}) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,
@@ -38,7 +38,7 @@ func (s *selector) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopC
 
 			case syscall.SIGWINCH:
 				log.Println("[SIGNAL] Catch SIGWINCH")
-				winSizeCh <- s.terminal.getWinSize()
+				winSizeCh <- c.terminal.getWinSize()
 			}
 		}
 	}

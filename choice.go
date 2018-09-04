@@ -1,4 +1,4 @@
-package selector
+package choice
 
 import (
 	"io/ioutil"
@@ -8,38 +8,38 @@ import (
 	"time"
 )
 
-type selector struct {
+type chooser struct {
 	terminal *terminal
 	render   *render
 	list     []string
 }
 
-func NewSelector(list []string) *selector {
-	return &selector{
+func NewChooser(list []string) *chooser {
+	return &chooser{
 		terminal: newTerminal(),
 		render:   newRender(),
 		list:     list,
 	}
 }
 
-func (s *selector) init() {
-	s.terminal.setup()
-	s.render.winSize = s.terminal.getWinSize()
-	s.filter()
-	s.render.render()
+func (c *chooser) init() {
+	c.terminal.setup()
+	c.render.winSize = c.terminal.getWinSize()
+	c.filter()
+	c.render.render()
 }
 
-func (s *selector) filter() {
+func (c *chooser) filter() {
 	var result []string
-	for _, v := range s.list {
-		if strings.Contains(v, s.render.buffer.text) {
+	for _, v := range c.list {
+		if strings.Contains(v, c.render.buffer.text) {
 			result = append(result, v)
 		}
 	}
-	s.render.completion = newCompletion(s.render.limit(result))
+	c.render.completion = newCompletion(c.render.limit(result))
 }
 
-func (s *selector) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	log.Println("[INFO] readBuffer start")
 	for {
 		select {
@@ -47,7 +47,7 @@ func (s *selector) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			log.Println("[INFO] stop readBuffer")
 			return
 		default:
-			if b, err := s.terminal.read(); err == nil && !(len(b) == 1 && b[0] == 0) {
+			if b, err := c.terminal.read(); err == nil && !(len(b) == 1 && b[0] == 0) {
 				bufCh <- b
 			}
 		}
@@ -55,35 +55,35 @@ func (s *selector) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (s *selector) response(b []byte) (bool, string) {
+func (c *chooser) response(b []byte) (bool, string) {
 	switch key := getKey(b); key {
 	case ignore:
 		log.Println("[INFO] Not defined.")
 	case displayable:
-		s.render.buffer.insert(string(b))
-		s.filter()
+		c.render.buffer.insert(string(b))
+		c.filter()
 	case enter:
-		if 0 <= s.render.completion.target {
-			return true, s.render.completion.suggestions[s.render.completion.target]
+		if 0 <= c.render.completion.target {
+			return true, c.render.completion.suggestions[c.render.completion.target]
 		}
 		return true, ""
 	case controlC:
 		return true, ""
 	case controlN:
-		s.render.completion.next()
+		c.render.completion.next()
 	case controlP:
-		s.render.completion.previous()
+		c.render.completion.previous()
 	default:
 		if function, ok := keyBindCmds[key]; ok {
-			function(s.render.buffer)
-			s.filter()
+			function(c.render.buffer)
+			c.filter()
 		}
 	}
 
 	return false, ""
 }
 
-func (s *selector) Run() string {
+func (c *chooser) Run() string {
 	if l := os.Getenv("LOG_PATH"); l == "" {
 		log.SetOutput(ioutil.Discard)
 	} else if f, err := os.OpenFile(l, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
@@ -94,35 +94,35 @@ func (s *selector) Run() string {
 		log.Println("[INFO] Logging is enabled.")
 	}
 
-	s.init()
-	defer s.terminal.restore()
+	c.init()
+	defer c.terminal.restore()
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
-	go s.readBuffer(bufCh, stopReadBufCh)
+	go c.readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *winSize)
 	stopHandleSignalCh := make(chan struct{})
-	go s.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
+	go c.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, text := s.response(b); shouldExit {
+			if shouldExit, text := c.response(b); shouldExit {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
-				s.render.clear()
+				c.render.clear()
 				return text
 			}
-			s.render.render()
+			c.render.render()
 
 		case code := <-exitCh:
 			os.Exit(code)
 
 		case w := <-winSizeCh:
-			s.render.winSize = w
-			s.render.render()
+			c.render.winSize = w
+			c.render.render()
 
 		default:
 			time.Sleep(10 * time.Millisecond)

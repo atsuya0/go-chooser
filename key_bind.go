@@ -1,4 +1,4 @@
-package selector
+package choice
 
 var keyBindCmds = map[int]func(*buffer){
 	delete: func(b *buffer) {

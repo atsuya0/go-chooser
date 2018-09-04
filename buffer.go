@@ -1,4 +1,4 @@
-package selector
+package choice
 
 type buffer struct {
 	text           string
