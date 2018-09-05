@@ -2,7 +2,6 @@ package choice
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -29,22 +28,31 @@ func (c *chooser) init() {
 	c.render.render()
 }
 
+// It contains all whitespace-separated character strings.
+func (c *chooser) contains(str string) bool {
+	for _, substr := range strings.Fields(c.render.buffer.text) {
+		if !(strings.Contains(str, substr)) {
+			return false
+		}
+	}
+	return true
+}
+
+// Filter the complement target.
 func (c *chooser) filter() {
 	var result []string
-	for _, v := range c.list {
-		if strings.Contains(v, c.render.buffer.text) {
-			result = append(result, v)
+	for _, str := range c.list {
+		if c.contains(str) {
+			result = append(result, str)
 		}
 	}
 	c.render.completion = newCompletion(c.render.limit(result))
 }
 
 func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
-	log.Println("[INFO] readBuffer start")
 	for {
 		select {
 		case <-stopCh:
-			log.Println("[INFO] stop readBuffer")
 			return
 		default:
 			if b, err := c.terminal.read(); err == nil && !(len(b) == 1 && b[0] == 0) {
@@ -58,7 +66,7 @@ func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 func (c *chooser) response(b []byte) (bool, string) {
 	switch key := getKey(b); key {
 	case ignore:
-		log.Println("[INFO] Not defined.")
+		return false, ""
 	case displayable:
 		c.render.buffer.insert(string(b))
 		c.filter()
@@ -84,16 +92,6 @@ func (c *chooser) response(b []byte) (bool, string) {
 }
 
 func (c *chooser) Run() string {
-	if l := os.Getenv("LOG_PATH"); l == "" {
-		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(l, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-		log.SetOutput(ioutil.Discard)
-	} else {
-		defer f.Close()
-		log.SetOutput(f)
-		log.Println("[INFO] Logging is enabled.")
-	}
-
 	c.init()
 	defer c.terminal.restore()
 
