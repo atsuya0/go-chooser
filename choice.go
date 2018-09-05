@@ -1,7 +1,6 @@
 package choice
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
