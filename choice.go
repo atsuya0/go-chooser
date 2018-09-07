@@ -27,6 +27,10 @@ func (c *chooser) init() {
 	c.render.render()
 }
 
+func (c *chooser) SetPrefix(prefix string) {
+	c.render.prefix = prefix + " "
+}
+
 // It contains all whitespace-separated character strings.
 func (c *chooser) contains(str string) bool {
 	for _, substr := range strings.Fields(c.render.buffer.text) {
