@@ -33,12 +33,26 @@ func (r *render) renderBuffer() {
 	fmt.Println(r.prefix + r.buffer.text)
 }
 
+func (r *render) shortenSuggestions() []string {
+	var suggestions []string
+	for _, suggestion := range r.completion.suggestions {
+		runeSuggestion := []rune(suggestion)
+		if len(runeSuggestion) <= int(r.winSize.col) {
+			suggestions = append(suggestions, suggestion)
+		} else {
+			suggestions =
+				append(suggestions, string(runeSuggestion[:r.winSize.col]))
+		}
+	}
+	return suggestions
+}
+
 func (r *render) renderSuggestions() {
 	if r.completion.target < 0 {
 		return
 	}
 	suggestions := make([]string, r.completion.length())
-	copy(suggestions, r.completion.suggestions)
+	copy(suggestions, r.shortenSuggestions())
 	suggestions[r.completion.target] =
 		fmt.Sprintf(selectedSuggestionFormat, suggestions[r.completion.target])
 	fmt.Print(strings.Join(suggestions, "\n"))
