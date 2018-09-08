@@ -1,7 +1,6 @@
 package choice
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,24 +19,16 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh
 	for {
 		select {
 		case <-stopCh:
-			log.Println("[INFO] stop handleSignals")
 			return
 		case signal := <-sigCh:
 			switch signal {
 			case syscall.SIGINT:
-				log.Println("[SIGNAL] Catch SIGINT")
 				exitCh <- 0
-
 			case syscall.SIGTERM:
-				log.Println("[SIGNAL] Catch SIGTERM")
 				exitCh <- 1
-
 			case syscall.SIGQUIT:
-				log.Println("[SIGNAL] Catch SIGQUIT")
 				exitCh <- 0
-
 			case syscall.SIGWINCH:
-				log.Println("[SIGNAL] Catch SIGWINCH")
 				winSizeCh <- c.terminal.getWinSize()
 			}
 		}
