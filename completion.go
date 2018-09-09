@@ -16,8 +16,6 @@ func (c *completion) next() {
 
 	if c.target+1 < c.length() {
 		c.target += 1
-	} else {
-		c.target = 0
 	}
 }
 
@@ -28,8 +26,6 @@ func (c *completion) previous() {
 
 	if 0 <= c.target-1 {
 		c.target -= 1
-	} else {
-		c.target = c.length() - 1
 	}
 }
 

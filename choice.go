@@ -49,7 +49,7 @@ func (c *chooser) filter() {
 			result = append(result, str)
 		}
 	}
-	c.render.completion = newCompletion(c.render.limit(result))
+	c.render.completion = newCompletion(result)
 }
 
 func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
@@ -81,9 +81,9 @@ func (c *chooser) response(b []byte) (bool, string) {
 	case controlC:
 		return true, ""
 	case controlN:
-		c.render.completion.next()
+		c.render.next()
 	case controlP:
-		c.render.completion.previous()
+		c.render.previous()
 	default:
 		if function, ok := keyBindCmds[key]; ok {
 			function(c.render.buffer)

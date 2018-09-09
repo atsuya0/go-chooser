@@ -11,66 +11,80 @@ const (
 )
 
 type render struct {
-	prefix     string
-	buffer     *buffer
-	completion *completion
-	winSize    *winSize
-}
-
-func (r *render) limit(suggestions []string) []string {
-	if len(suggestions) <= int(r.winSize.row-2) {
-		return suggestions
-	} else {
-		return suggestions[:r.winSize.row-2]
-	}
+	prefix        string
+	buffer        *buffer
+	completion    *completion
+	startingPoint int // Starting point of display.
+	winSize       *winSize
 }
 
 func (r *render) clear() {
 	fmt.Print("\x1b[1G\x1b[J")
 }
 
+func (r *render) endPoint() int {
+	return r.startingPoint + int(r.winSize.row) - 2
+}
+
+func (r *render) next() {
+	r.completion.next()
+	if r.endPoint() <= r.completion.target {
+		r.startingPoint += 1
+	}
+}
+
+func (r *render) previous() {
+	r.completion.previous()
+	if r.completion.target < r.startingPoint {
+		r.startingPoint -= 1
+	}
+}
+
 func (r *render) renderBuffer() {
 	fmt.Println(r.prefix + r.buffer.text)
 }
 
-func (r *render) shortenSuggestions() []string {
-	var suggestions []string
-	for _, suggestion := range r.completion.suggestions {
-		runeSuggestion := []rune(suggestion)
-		if len(runeSuggestion) <= int(r.winSize.col) {
-			suggestions = append(suggestions, suggestion)
-		} else {
-			suggestions =
-				append(suggestions, string(runeSuggestion[:r.winSize.col]))
-		}
+func (r *render) shortenSuggestion(suggestion string) string {
+	runeSuggestion := []rune(suggestion)
+	if len(runeSuggestion) <= int(r.winSize.col) {
+		return suggestion
 	}
-	return suggestions
+	return string(runeSuggestion[:r.winSize.col])
 }
 
-func (r *render) renderSuggestions() {
+func (r *render) relativePositionOfTarget() int {
+	return r.completion.target - r.startingPoint
+}
+
+func (r *render) renderSuggestions() int {
 	if r.completion.target < 0 {
-		return
+		return 0
 	}
-	suggestions := make([]string, r.completion.length())
-	copy(suggestions, r.shortenSuggestions())
-	suggestions[r.completion.target] =
-		fmt.Sprintf(selectedSuggestionFormat, suggestions[r.completion.target])
+	var suggestions []string
+	for i := r.startingPoint; i < r.endPoint() && i < r.completion.length(); i++ {
+		suggestions = append(
+			suggestions, r.shortenSuggestion(r.completion.suggestions[i]))
+	}
+	suggestions[r.relativePositionOfTarget()] =
+		fmt.Sprintf(selectedSuggestionFormat, suggestions[r.relativePositionOfTarget()])
 	fmt.Print(strings.Join(suggestions, "\n"))
+
+	return len(suggestions)
 }
 
 func (r *render) cursorColPosition() int {
 	return r.buffer.cursorPosition + len(r.prefix) + 1
 }
 
-func (r *render) restoreCursorPosition() {
-	fmt.Printf("\x1b[%dA\x1b[%dG", r.completion.length(), r.cursorColPosition())
+func (r *render) restoreCursorPosition(numOfSuggestions int) {
+	fmt.Printf("\x1b[%dA\x1b[%dG", numOfSuggestions, r.cursorColPosition())
 }
 
 func (r *render) render() {
 	r.clear()
 	r.renderBuffer()
-	r.renderSuggestions()
-	r.restoreCursorPosition()
+	numOfSuggestions := r.renderSuggestions()
+	r.restoreCursorPosition(numOfSuggestions)
 }
 
 func newRender() *render {
