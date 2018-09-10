@@ -20,19 +20,20 @@ type render struct {
 
 func newRender() *render {
 	return &render{
-		buffer: newBuffer(),
-		prefix: prefix,
+		prefix:        prefix,
+		buffer:        newBuffer(),
+		startingPoint: 0,
 	}
 }
 
 func (r *render) render() {
-	r.clear()
+	clear()
 	r.renderBuffer()
 	numOfSuggestions := r.renderSuggestions()
 	r.restoreCursorPosition(numOfSuggestions)
 }
 
-func (r *render) clear() {
+func clear() {
 	fmt.Print("\x1b[1G\x1b[J")
 }
 
