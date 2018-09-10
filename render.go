@@ -18,12 +18,22 @@ type render struct {
 	winSize       *winSize
 }
 
-func (r *render) clear() {
-	fmt.Print("\x1b[1G\x1b[J")
+func newRender() *render {
+	return &render{
+		buffer: newBuffer(),
+		prefix: prefix,
+	}
 }
 
-func (r *render) endPoint() int {
-	return r.startingPoint + int(r.winSize.row) - 2
+func (r *render) render() {
+	r.clear()
+	r.renderBuffer()
+	numOfSuggestions := r.renderSuggestions()
+	r.restoreCursorPosition(numOfSuggestions)
+}
+
+func (r *render) clear() {
+	fmt.Print("\x1b[1G\x1b[J")
 }
 
 func (r *render) next() {
@@ -40,20 +50,12 @@ func (r *render) previous() {
 	}
 }
 
+func (r *render) endPoint() int {
+	return r.startingPoint + int(r.winSize.row) - 2
+}
+
 func (r *render) renderBuffer() {
 	fmt.Println(r.prefix + r.buffer.text)
-}
-
-func (r *render) shortenSuggestion(suggestion string) string {
-	runeSuggestion := []rune(suggestion)
-	if len(runeSuggestion) <= int(r.winSize.col) {
-		return suggestion
-	}
-	return string(runeSuggestion[:r.winSize.col])
-}
-
-func (r *render) relativePositionOfTarget() int {
-	return r.completion.target - r.startingPoint
 }
 
 func (r *render) renderSuggestions() int {
@@ -72,24 +74,22 @@ func (r *render) renderSuggestions() int {
 	return len(suggestions)
 }
 
-func (r *render) cursorColPosition() int {
-	return r.buffer.cursorPosition + len(r.prefix) + 1
-}
-
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
 	fmt.Printf("\x1b[%dA\x1b[%dG", numOfSuggestions, r.cursorColPosition())
 }
 
-func (r *render) render() {
-	r.clear()
-	r.renderBuffer()
-	numOfSuggestions := r.renderSuggestions()
-	r.restoreCursorPosition(numOfSuggestions)
+func (r *render) shortenSuggestion(suggestion string) string {
+	runeSuggestion := []rune(suggestion)
+	if len(runeSuggestion) <= int(r.winSize.col) {
+		return suggestion
+	}
+	return string(runeSuggestion[:r.winSize.col])
 }
 
-func newRender() *render {
-	return &render{
-		buffer: newBuffer(),
-		prefix: prefix,
-	}
+func (r *render) relativePositionOfTarget() int {
+	return r.completion.target - r.startingPoint
+}
+
+func (r *render) cursorColPosition() int {
+	return r.buffer.cursorPosition + len(r.prefix) + 1
 }
