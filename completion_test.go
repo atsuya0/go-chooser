@@ -29,12 +29,6 @@ func TestCompletionNext(t *testing.T) {
 		},
 		{
 			completion: &completion{
-				suggestions: []string{"test1", "test2", "test3"}, target: 2,
-			},
-			requestTarget: 0,
-		},
-		{
-			completion: &completion{
 				suggestions: []string{}, target: -1,
 			},
 			requestTarget: -1,
@@ -60,12 +54,6 @@ func TestCompletionPrevious(t *testing.T) {
 				suggestions: []string{"test1", "test2", "test3"}, target: 2,
 			},
 			requestTarget: 1,
-		},
-		{
-			completion: &completion{
-				suggestions: []string{"test1", "test2", "test3"}, target: 0,
-			},
-			requestTarget: 2,
 		},
 		{
 			completion: &completion{
