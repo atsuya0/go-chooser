@@ -33,10 +33,6 @@ func (r *render) render() {
 	r.restoreCursorPosition(numOfSuggestions)
 }
 
-func clear() {
-	fmt.Print("\x1b[1G\x1b[J")
-}
-
 func (r *render) next() {
 	r.completion.next()
 	if r.endPoint() <= r.completion.target {
@@ -76,7 +72,7 @@ func (r *render) renderSuggestions() int {
 }
 
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
-	fmt.Printf("\x1b[%dA\x1b[%dG", numOfSuggestions, r.cursorColPosition())
+	fmt.Print(cursorUp(numOfSuggestions), setColCursor(r.cursorColPosition()))
 }
 
 func (r *render) shortenSuggestion(suggestion string) string {
