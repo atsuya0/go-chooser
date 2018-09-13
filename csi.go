@@ -18,6 +18,7 @@ func clearCursorEnd() string {
 	return "\x1b[J"
 }
 
+// Clear the screen.
 func clear() {
 	fmt.Print(setColCursor(1), clearCursorEnd())
 }
