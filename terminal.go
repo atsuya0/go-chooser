@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/xerrors"
 )
 
 const maxReadBytes = 1024
@@ -67,13 +68,14 @@ func (t *terminal) getWinSize() *winSize {
 	}
 }
 
-func (t *terminal) setup() {
+func (t *terminal) setup() error {
 	if err := syscall.SetNonblock(t.fd, true); err != nil {
-		log.Fatalln("Cannot set non blocking mode.")
+		return xerrors.Errorf("Cannot set non blocking mode: %w", err)
 	}
 	if err := t.setRawMode(); err != nil {
-		log.Fatalln("Cannot set raw mode.")
+		return xerrors.Errorf("Cannot set raw mode: %w", err)
 	}
+	return nil
 }
 
 func (t *terminal) restore() error {

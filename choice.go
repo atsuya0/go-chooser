@@ -1,6 +1,7 @@
 package choice
 
 import (
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -26,7 +27,9 @@ func NewChooser(list []string) (*chooser, error) {
 }
 
 func (c *chooser) init() {
-	c.terminal.setup()
+	if err := c.terminal.setup(); err != nil {
+		log.Fatalf("%+v\n", err)
+	}
 	c.render.winSize = c.terminal.getWinSize()
 	c.filter()
 	c.render.render()
