@@ -88,19 +88,19 @@ func (t *terminal) restore() error {
 	return nil
 }
 
-func newTerminal() *terminal {
+func newTerminal() (*terminal, error) {
 	fd, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
 	if err != nil {
-		log.Fatalln(err)
+		return &terminal{}, err
 	}
 
 	var org syscall.Termios
 	if err := termios.Tcgetattr(uintptr(fd), &org); err != nil {
-		log.Fatalln(err)
+		return &terminal{}, err
 	}
 
 	return &terminal{
 		fd:              fd,
 		originalTermios: org,
-	}
+	}, nil
 }

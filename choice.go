@@ -12,12 +12,17 @@ type chooser struct {
 	list     []string
 }
 
-func NewChooser(list []string) *chooser {
+func NewChooser(list []string) (*chooser, error) {
+	terminal, err := newTerminal()
+	if err != nil {
+		return &chooser{}, err
+	}
+
 	return &chooser{
-		terminal: newTerminal(),
+		terminal: terminal,
 		render:   newRender(),
 		list:     list,
-	}
+	}, nil
 }
 
 func (c *chooser) init() {
