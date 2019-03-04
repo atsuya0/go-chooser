@@ -7,11 +7,16 @@ package main
 
 import (
 	"fmt"
+	"log"
+	
 	"github.com/tayusa/go-choice"
 )
 
 func main() {
-	chooser := choice.NewChooser([]string{"test9", "te11", "jfdls", "fdsaf", "daj", "fdsie", "feafii", "fdiaoeioa", "feiaofjl"})
-	fmt.Print(chooser.Run())
+	chooser, err := choice.NewChooser([]string{"test9", "te11", "jfdls", "fdsaf", "daj", "fdsie", "feafii", "fdiaoeioa", "feiaofjl"})
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
+	fmt.Println(chooser.Run())
 }
 ```
