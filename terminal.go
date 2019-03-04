@@ -41,9 +41,8 @@ func (t *terminal) setRawMode() error {
 	org.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
 	org.Cc[syscall.VTIME] = 0
 	org.Cc[syscall.VMIN] = 1
-	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &org)
 
-	return nil
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &org)
 }
 
 func (t *terminal) resetMode() error {
