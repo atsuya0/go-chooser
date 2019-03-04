@@ -1,7 +1,6 @@
 package choice
 
 import (
-	"log"
 	"syscall"
 	"unsafe"
 
@@ -80,12 +79,10 @@ func (t *terminal) setup() error {
 
 func (t *terminal) restore() error {
 	if err := syscall.SetNonblock(t.fd, false); err != nil {
-		log.Fatalln("Cannot set blocking mode.")
-		return err
+		return xerrors.Errorf("Cannot set blocking mode: %w", err)
 	}
 	if err := t.resetMode(); err != nil {
-		log.Fatalln("Cannot reset from raw mode.")
-		return err
+		return xerrors.Errorf("Cannot reset from raw mode: %w", err)
 	}
 	return nil
 }

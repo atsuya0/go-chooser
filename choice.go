@@ -104,7 +104,11 @@ func (c *chooser) response(b []byte) (bool, string) {
 
 func (c *chooser) Run() string {
 	c.init()
-	defer c.terminal.restore()
+	defer func() {
+		if err := c.terminal.restore(); err != nil {
+			log.Fatalf("%+v\n", err)
+		}
+	}()
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
