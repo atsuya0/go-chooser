@@ -6,14 +6,14 @@ import (
 )
 
 const (
-	prefix               = ">>> "
+	prompt               = ">>> "
 	cursorPositionFormat = "\x1b[1;37m%s\x1b[m"
 	selectedFormat       = "\x1b[1;34m%s\x1b[m"
 	promptHeight         = 2
 )
 
 type render struct {
-	prefix        string
+	prompt        string
 	buffer        *buffer
 	completion    *completion
 	startingPoint int // Starting point of display.
@@ -23,7 +23,7 @@ type render struct {
 
 func newRender() *render {
 	return &render{
-		prefix:        prefix,
+		prompt:        prompt,
 		buffer:        newBuffer(),
 		startingPoint: 0,
 		register:      make([]int, 0),
@@ -56,7 +56,7 @@ func (r *render) endPoint() int {
 }
 
 func (r *render) renderBuffer() {
-	fmt.Println(r.prefix + r.buffer.text)
+	fmt.Println(r.prompt + r.buffer.text)
 }
 
 func (r *render) renderSuggestions() int {
@@ -91,7 +91,7 @@ func (r *render) relativePositionOfTarget() int {
 }
 
 func (r *render) cursorColPosition() int {
-	return r.buffer.cursorPosition + len(r.prefix) + 1
+	return r.buffer.cursorPosition + len(r.prompt) + 1
 }
 
 func (r *render) formatSuggestion(i int) string {

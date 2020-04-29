@@ -35,8 +35,8 @@ func (c *chooser) init() {
 	c.render.render()
 }
 
-func (c *chooser) SetPrefix(prefix string) {
-	c.render.prefix = prefix + " "
+func (c *chooser) SetPrompt(prompt string) {
+	c.render.prompt = prompt + " "
 }
 
 // It contains all whitespace-separated character strings.
