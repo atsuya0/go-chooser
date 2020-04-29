@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	prefix                   = ">>> "
-	selectedSuggestionFormat = "\x1b[1;37m%s\x1b[m"
+	prefix               = ">>> "
+	cursorPositionFormat = "\x1b[1;37m%s\x1b[m"
+	selectedFormat       = "\x1b[1;34m%s\x1b[m"
+	promptHeight         = 2
 )
 
 type render struct {
@@ -16,6 +18,7 @@ type render struct {
 	completion    *completion
 	startingPoint int // Starting point of display.
 	winSize       *winSize
+	register      []int
 }
 
 func newRender() *render {
@@ -23,6 +26,7 @@ func newRender() *render {
 		prefix:        prefix,
 		buffer:        newBuffer(),
 		startingPoint: 0,
+		register:      make([]int, 0),
 	}
 }
 
@@ -48,7 +52,7 @@ func (r *render) previous() {
 }
 
 func (r *render) endPoint() int {
-	return r.startingPoint + int(r.winSize.row) - 2
+	return r.startingPoint + int(r.winSize.row) - promptHeight
 }
 
 func (r *render) renderBuffer() {
@@ -61,11 +65,11 @@ func (r *render) renderSuggestions() int {
 	}
 	var suggestions []string
 	for i := r.startingPoint; i < r.endPoint() && i < r.completion.length(); i++ {
-		suggestions = append(
-			suggestions, r.shortenSuggestion(r.completion.suggestions[i]))
+		suggestions = append(suggestions, r.formatSuggestion(i))
+		fmt.Sprintf(selectedFormat)
 	}
 	suggestions[r.relativePositionOfTarget()] =
-		fmt.Sprintf(selectedSuggestionFormat, suggestions[r.relativePositionOfTarget()])
+		fmt.Sprintf(cursorPositionFormat, suggestions[r.relativePositionOfTarget()])
 	fmt.Print(strings.Join(suggestions, "\n"))
 
 	return len(suggestions)
@@ -80,7 +84,7 @@ func (r *render) shortenSuggestion(suggestion string) string {
 	if len(runeSuggestion) <= int(r.winSize.col) {
 		return suggestion
 	}
-	return string(runeSuggestion[:r.winSize.col])
+	return string(runeSuggestion[:r.winSize.col:r.winSize.col])
 }
 
 func (r *render) relativePositionOfTarget() int {
@@ -89,4 +93,28 @@ func (r *render) relativePositionOfTarget() int {
 
 func (r *render) cursorColPosition() int {
 	return r.buffer.cursorPosition + len(r.prefix) + 1
+}
+
+func (r *render) formatSuggestion(i int) string {
+	for _, v := range r.register {
+		if v == r.completion.indexes[i] {
+			return fmt.Sprintf(selectedFormat,
+				r.shortenSuggestion(r.completion.suggestions[i]))
+		}
+	}
+	return r.shortenSuggestion(r.completion.suggestions[i])
+}
+
+func (r *render) updateRegister() {
+	index := r.completion.getIndex()
+	if index < 0 {
+		return
+	}
+	for i, v := range r.register {
+		if v == index {
+			r.register = append(r.register[:i:i], r.register[i+1:]...)
+			return
+		}
+	}
+	r.register = append(r.register, r.completion.indexes[r.completion.target])
 }
