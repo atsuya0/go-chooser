@@ -66,7 +66,6 @@ func (r *render) renderSuggestions() int {
 	var suggestions []string
 	for i := r.startingPoint; i < r.endPoint() && i < r.completion.length(); i++ {
 		suggestions = append(suggestions, r.formatSuggestion(i))
-		fmt.Sprintf(selectedFormat)
 	}
 	suggestions[r.relativePositionOfTarget()] =
 		fmt.Sprintf(cursorPositionFormat, suggestions[r.relativePositionOfTarget()])
