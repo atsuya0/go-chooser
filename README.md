@@ -1,7 +1,5 @@
 # go-choice
 
-chooser.Run([]string) -> string
-
 ```go
 package main
 
