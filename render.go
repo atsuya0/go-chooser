@@ -6,10 +6,14 @@ import (
 )
 
 const (
-	prompt               = ">>> "
-	cursorPositionFormat = "\x1b[1;37m%s\x1b[m"
-	selectedFormat       = "\x1b[1;34m%s\x1b[m"
-	promptHeight         = 2
+	prompt         = ">>> "
+	normalSymbol   = "  "
+	cursorSymbol   = "> "
+	selectedSymbol = "* "
+	normalFormat   = "%s"
+	cursorFormat   = "\x1b[1;37m%s\x1b[m"
+	selectedFormat = "\x1b[1;34m%s\x1b[m"
+	promptHeight   = 2
 )
 
 type render struct {
@@ -65,10 +69,9 @@ func (r *render) renderSuggestions() int {
 	}
 	var suggestions []string
 	for i := r.startingPoint; i < r.endPoint() && i < r.completion.length(); i++ {
-		suggestions = append(suggestions, r.formatSuggestion(i))
+		suggestions = append(suggestions,
+			r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.shortenSuggestion(r.completion.suggestions[i])))
 	}
-	suggestions[r.relativePositionOfTarget()] =
-		fmt.Sprintf(cursorPositionFormat, suggestions[r.relativePositionOfTarget()])
 	fmt.Print(strings.Join(suggestions, "\n"))
 
 	return len(suggestions)
@@ -79,11 +82,12 @@ func (r *render) restoreCursorPosition(numOfSuggestions int) {
 }
 
 func (r *render) shortenSuggestion(suggestion string) string {
+	displayableWidth := int(r.winSize.col) - len(normalSymbol)
 	runeSuggestion := []rune(suggestion)
-	if len(runeSuggestion) <= int(r.winSize.col) {
+	if len(runeSuggestion) <= displayableWidth {
 		return suggestion
 	}
-	return string(runeSuggestion[:r.winSize.col:r.winSize.col])
+	return string(runeSuggestion[:displayableWidth:displayableWidth])
 }
 
 func (r *render) relativePositionOfTarget() int {
@@ -94,14 +98,34 @@ func (r *render) cursorColPosition() int {
 	return r.buffer.cursorPosition + len(r.prompt) + 1
 }
 
-func (r *render) formatSuggestion(i int) string {
+// cursorSymbol is the highest priority.
+func (r *render) assignSymbol(i int) string {
+	if r.relativePositionOfTarget() == i {
+		return cursorSymbol
+	}
+
 	for _, v := range r.register {
 		if v == r.completion.indexes[i] {
-			return fmt.Sprintf(selectedFormat,
-				r.shortenSuggestion(r.completion.suggestions[i]))
+			return selectedSymbol
 		}
 	}
-	return r.shortenSuggestion(r.completion.suggestions[i])
+
+	return normalSymbol
+}
+
+// selectedFormat is the highest priority.
+func (r *render) assignFormat(i int) string {
+	for _, v := range r.register {
+		if v == r.completion.indexes[i] {
+			return selectedFormat
+		}
+	}
+
+	if r.relativePositionOfTarget() == i {
+		return cursorFormat
+	}
+
+	return normalFormat
 }
 
 func (r *render) updateRegister() {

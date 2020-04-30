@@ -37,6 +37,13 @@ func (c *completion) getIndex() int {
 	return c.indexes[c.target]
 }
 
+func (c *completion) getSuggestion() string {
+	if c.target < 0 {
+		return ""
+	}
+	return c.suggestions[c.target]
+}
+
 func newCompletion(suggestions []string, indexes []int) *completion {
 	var idx int
 	if len(suggestions) == 0 {
