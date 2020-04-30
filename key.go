@@ -37,12 +37,11 @@ const (
 	controlZ
 	enter
 	tab
-	backTab
-	delete
 	backspace
+	delete
 
-	ignore
 	displayable
+	ignore
 )
 
 var keys = []*key{
@@ -54,8 +53,6 @@ var keys = []*key{
 	{id: controlF, code: []byte{0x6}},
 	{id: controlG, code: []byte{0x7}},
 	{id: controlH, code: []byte{0x8}},
-	// tab: {id: controlI, code: []byte{0x9}},
-	// enter: {id: controlJ, code: []byte{0xa}},
 	{id: controlK, code: []byte{0xb}},
 	{id: controlL, code: []byte{0xc}},
 	{id: controlM, code: []byte{0xd}},
@@ -74,10 +71,9 @@ var keys = []*key{
 	{id: controlZ, code: []byte{0x1a}},
 	{id: escape, code: []byte{0x1b}},
 	{id: enter, code: []byte{0xa}},
+	{id: tab, code: []byte{0x9}},
 	{id: backspace, code: []byte{0x7f}},
 	{id: delete, code: []byte{0x1b, 0x5b, 0x33, 0x7e}},
-	{id: tab, code: []byte{0x9}},
-	{id: backTab, code: []byte{0x1b, 0x5b, 0x5a}},
 }
 
 func getKey(b []byte) int {
