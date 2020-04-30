@@ -6,23 +6,31 @@ import (
 )
 
 const (
-	prefix                   = ">>> "
-	selectedSuggestionFormat = "\x1b[1;37m%s\x1b[m"
+	prompt         = ">>> "
+	normalSymbol   = "  "
+	cursorSymbol   = "> "
+	selectedSymbol = "* "
+	normalFormat   = "%s"
+	cursorFormat   = "\x1b[1;37m%s\x1b[m"
+	selectedFormat = "\x1b[1;34m%s\x1b[m"
+	promptHeight   = 2
 )
 
 type render struct {
-	prefix        string
-	buffer        *buffer
-	completion    *completion
-	startingPoint int // Starting point of display.
+	buffer     *buffer
+	completion *completion
+	// The starting index of display suggestions.
+	// If The number of lines suggestions is larger than the height of the screen.
+	startingIndex int
 	winSize       *winSize
+	register      []int
 }
 
 func newRender() *render {
 	return &render{
-		prefix:        prefix,
 		buffer:        newBuffer(),
-		startingPoint: 0,
+		startingIndex: 0,
+		register:      make([]int, 0),
 	}
 }
 
@@ -35,40 +43,39 @@ func (r *render) render() {
 
 func (r *render) next() {
 	r.completion.next()
-	if r.endPoint() <= r.completion.target {
-		r.startingPoint += 1
+	if r.endingIndex() <= r.completion.target {
+		r.startingIndex += 1
 	}
 }
 
 func (r *render) previous() {
 	r.completion.previous()
-	if r.completion.target < r.startingPoint {
-		r.startingPoint -= 1
+	if r.completion.target < r.startingIndex {
+		r.startingIndex -= 1
 	}
 }
 
-func (r *render) endPoint() int {
-	return r.startingPoint + int(r.winSize.row) - 2
+// The ending index of display suggestions.
+func (r *render) endingIndex() int {
+	return r.startingIndex + int(r.winSize.row) - promptHeight
 }
 
 func (r *render) renderBuffer() {
-	fmt.Println(r.prefix + r.buffer.text)
+	fmt.Println(prompt + r.buffer.text)
 }
 
 func (r *render) renderSuggestions() int {
 	if r.completion.target < 0 {
 		return 0
 	}
-	var suggestions []string
-	for i := r.startingPoint; i < r.endPoint() && i < r.completion.length(); i++ {
-		suggestions = append(
-			suggestions, r.shortenSuggestion(r.completion.suggestions[i]))
+	var suggestionsToDisplay []string
+	for i := r.startingIndex; i < r.endingIndex() && i < r.completion.length(); i++ {
+		suggestionsToDisplay = append(suggestionsToDisplay,
+			r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.shortenSuggestion(r.completion.suggestions[i])))
 	}
-	suggestions[r.relativePositionOfTarget()] =
-		fmt.Sprintf(selectedSuggestionFormat, suggestions[r.relativePositionOfTarget()])
-	fmt.Print(strings.Join(suggestions, "\n"))
+	fmt.Print(strings.Join(suggestionsToDisplay, "\n"))
 
-	return len(suggestions)
+	return len(suggestionsToDisplay)
 }
 
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
@@ -76,17 +83,62 @@ func (r *render) restoreCursorPosition(numOfSuggestions int) {
 }
 
 func (r *render) shortenSuggestion(suggestion string) string {
+	displayableWidth := int(r.winSize.col) - len(normalSymbol)
 	runeSuggestion := []rune(suggestion)
-	if len(runeSuggestion) <= int(r.winSize.col) {
+	if len(runeSuggestion) <= displayableWidth {
 		return suggestion
 	}
-	return string(runeSuggestion[:r.winSize.col])
+	return string(runeSuggestion[:displayableWidth:displayableWidth])
 }
 
 func (r *render) relativePositionOfTarget() int {
-	return r.completion.target - r.startingPoint
+	return r.completion.target - r.startingIndex
 }
 
 func (r *render) cursorColPosition() int {
-	return r.buffer.cursorPosition + len(r.prefix) + 1
+	return r.buffer.cursorPosition + len(prompt) + 1
+}
+
+// cursorSymbol is the highest priority.
+func (r *render) assignSymbol(i int) string {
+	if r.relativePositionOfTarget() == i {
+		return cursorSymbol
+	}
+
+	for _, v := range r.register {
+		if v == r.completion.indexes[i] {
+			return selectedSymbol
+		}
+	}
+
+	return normalSymbol
+}
+
+// selectedFormat is the highest priority.
+func (r *render) assignFormat(i int) string {
+	for _, v := range r.register {
+		if v == r.completion.indexes[i] {
+			return selectedFormat
+		}
+	}
+
+	if r.relativePositionOfTarget() == i {
+		return cursorFormat
+	}
+
+	return normalFormat
+}
+
+func (r *render) updateRegister() {
+	index := r.completion.getIndex()
+	if index < 0 {
+		return
+	}
+	for i, v := range r.register {
+		if v == index {
+			r.register = append(r.register[:i:i], r.register[i+1:]...)
+			return
+		}
+	}
+	r.register = append(r.register, r.completion.indexes[r.completion.target])
 }

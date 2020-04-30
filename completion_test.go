@@ -4,12 +4,20 @@ import "testing"
 
 func TestCompletionNew(t *testing.T) {
 	patterns := []*completion{
-		{suggestions: []string{"test1", "test2", "test3"}, target: 0},
-		{suggestions: []string{}, target: -1},
+		{
+			suggestions: []string{"test1", "test2", "test3"},
+			indexes:     []int{2, 6, 8},
+			target:      0,
+		},
+		{
+			suggestions: []string{},
+			indexes:     []int{},
+			target:      -1,
+		},
 	}
 
 	for _, pattern := range patterns {
-		completion := newCompletion(pattern.suggestions)
+		completion := newCompletion(pattern.suggestions, pattern.indexes)
 		if completion.target != pattern.target {
 			t.Errorf("output: %v, request: %v", completion, pattern)
 		}

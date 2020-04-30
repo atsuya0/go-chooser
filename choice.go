@@ -35,10 +35,6 @@ func (c *chooser) init() {
 	c.render.render()
 }
 
-func (c *chooser) SetPrefix(prefix string) {
-	c.render.prefix = prefix + " "
-}
-
 // It contains all whitespace-separated character strings.
 func (c *chooser) contains(str string) bool {
 	for _, substr := range strings.Fields(c.render.buffer.text) {
@@ -51,13 +47,15 @@ func (c *chooser) contains(str string) bool {
 
 // Filter the complement target.
 func (c *chooser) filter() {
-	var result []string
-	for _, str := range c.list {
+	var suggestions []string
+	var indexes []int
+	for index, str := range c.list {
 		if c.contains(str) {
-			result = append(result, str)
+			suggestions = append(suggestions, str)
+			indexes = append(indexes, index)
 		}
 	}
-	c.render.completion = newCompletion(result)
+	c.render.completion = newCompletion(suggestions, indexes)
 }
 
 func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
@@ -74,20 +72,29 @@ func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (c *chooser) response(b []byte) (bool, string) {
+func (c *chooser) response(b []byte) (bool, []string) {
 	switch key := getKey(b); key {
 	case ignore:
-		return false, ""
+		return false, make([]string, 0)
 	case displayable:
 		c.render.buffer.insert(string(b))
 		c.filter()
 	case enter:
-		if 0 <= c.render.completion.target {
-			return true, c.render.completion.suggestions[c.render.completion.target]
+		if c.render.completion.target < 0 {
+			return true, make([]string, 0)
 		}
-		return true, ""
+		if len(c.render.register) == 0 {
+			return true, []string{c.render.completion.suggestions[c.render.completion.target]}
+		}
+		var texts []string
+		for _, v := range c.render.register {
+			texts = append(texts, c.list[v])
+		}
+		return true, texts
+	case tab:
+		c.render.updateRegister()
 	case controlC:
-		return true, ""
+		return true, make([]string, 0)
 	case controlN:
 		c.render.next()
 	case controlP:
@@ -99,10 +106,10 @@ func (c *chooser) response(b []byte) (bool, string) {
 		}
 	}
 
-	return false, ""
+	return false, make([]string, 0)
 }
 
-func (c *chooser) Run() string {
+func (c *chooser) Run() []string {
 	c.init()
 	defer func() {
 		if err := c.terminal.restore(); err != nil {
@@ -122,11 +129,11 @@ func (c *chooser) Run() string {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, text := c.response(b); shouldExit {
+			if shouldExit, texts := c.response(b); shouldExit {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				clear()
-				return text
+				return texts
 			}
 			c.render.render()
 

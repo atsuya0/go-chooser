@@ -3,6 +3,7 @@ package choice
 type completion struct {
 	target      int
 	suggestions []string
+	indexes     []int
 }
 
 func (c *completion) length() int {
@@ -29,7 +30,21 @@ func (c *completion) previous() {
 	}
 }
 
-func newCompletion(suggestions []string) *completion {
+func (c *completion) getIndex() int {
+	if c.target < 0 {
+		return -1
+	}
+	return c.indexes[c.target]
+}
+
+func (c *completion) getSuggestion() string {
+	if c.target < 0 {
+		return ""
+	}
+	return c.suggestions[c.target]
+}
+
+func newCompletion(suggestions []string, indexes []int) *completion {
 	var idx int
 	if len(suggestions) == 0 {
 		idx = -1
@@ -39,5 +54,6 @@ func newCompletion(suggestions []string) *completion {
 	return &completion{
 		target:      idx,
 		suggestions: suggestions,
+		indexes:     indexes,
 	}
 }
