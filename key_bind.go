@@ -1,37 +1,110 @@
 package choice
 
-var keyBindCmds = map[int]func(*buffer){
-	delete: func(b *buffer) {
-		b.deleteCharOnCursor()
+type keyBindingBufferCmd struct {
+	function    func(*buffer)
+	key         string
+	description string
+}
+
+type keyBindingRenderCmd struct {
+	function    func(*render)
+	key         string
+	description string
+}
+
+var keyBindingBufferCmds = map[int]keyBindingBufferCmd{
+	delete: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.deleteCharOnCursor()
+		},
+		key:         "delete",
+		description: "Delete a character under cursor.",
 	},
-	controlD: func(b *buffer) {
-		b.deleteCharOnCursor()
+	controlD: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.deleteCharOnCursor()
+		},
+		key:         "controlD",
+		description: "Delete a character under cursor.",
 	},
-	backspace: func(b *buffer) {
-		b.backwardDeleteChar()
+	backspace: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.backwardDeleteChar()
+		},
+		key:         "backspace",
+		description: "Delete a character before cursor.",
 	},
-	controlH: func(b *buffer) {
-		b.backwardDeleteChar()
+	controlH: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.backwardDeleteChar()
+		},
+		key:         "controlH",
+		description: "Delete a character before cursor.",
 	},
-	controlF: func(b *buffer) {
-		b.forwardChar()
+	controlF: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.forwardChar()
+		},
+		key:         "controlF",
+		description: "Move forward a character.",
 	},
-	controlB: func(b *buffer) {
-		b.backwardChar()
+	controlB: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.backwardChar()
+		},
+		key:         "controlB",
+		description: "Move backward a character.",
 	},
-	controlA: func(b *buffer) {
-		b.beginningOfLine()
+	controlA: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.beginningOfLine()
+		},
+		key:         "controlA",
+		description: "Go to the beginning of the line.",
 	},
-	controlE: func(b *buffer) {
-		b.endOfLine()
+	controlE: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.endOfLine()
+		},
+		key:         "controlE",
+		description: "Go to the end of the line.",
 	},
-	controlU: func(b *buffer) {
-		b.backwardKillLine()
+	controlU: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.backwardKillLine()
+		},
+		key:         "controlU",
+		description: "Kill characters from cursor current position to the beginning of the line.",
 	},
-	controlK: func(b *buffer) {
-		b.killLine()
+	controlK: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.killLine()
+		},
+		key:         "controlK",
+		description: "Kill characters from cursor current position to the end of the line.",
 	},
-	controlW: func(b *buffer) {
-		b.backwardKillWord()
+	controlW: keyBindingBufferCmd{
+		function: func(b *buffer) {
+			b.backwardKillWord()
+		},
+		key:         "controlW",
+		description: "Delete before a word.",
+	},
+}
+
+var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
+	controlN: keyBindingRenderCmd{
+		function: func(r *render) {
+			r.next()
+		},
+		key:         "controlN",
+		description: "Move the cursor to the next line.",
+	},
+	controlP: keyBindingRenderCmd{
+		function: func(r *render) {
+			r.previous()
+		},
+		key:         "controlP",
+		description: "Move the cursor to the previous line.",
 	},
 }

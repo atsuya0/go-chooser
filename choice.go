@@ -32,7 +32,7 @@ func (c *chooser) init() {
 	}
 	c.render.winSize = c.terminal.getWinSize()
 	c.filter()
-	c.render.render()
+	c.render.renderSuggestions()
 }
 
 // It contains all whitespace-separated character strings.
@@ -93,16 +93,18 @@ func (c *chooser) response(b []byte) (bool, []string) {
 		c.render.updateRegister()
 	case controlC:
 		return true, make([]string, 0)
-	case controlN:
-		c.render.next()
-	case controlP:
-		c.render.previous()
+	case question:
+		c.render.renderKeyBindings()
+		return false, make([]string, 0)
 	default:
-		if function, ok := keyBindCmds[key]; ok {
-			function(c.render.buffer)
+		if keyBindingCmd, ok := keyBindingBufferCmds[key]; ok {
+			keyBindingCmd.function(c.render.buffer)
 			c.filter()
+		} else if keyBindingCmd, ok := keyBindingRenderCmds[key]; ok {
+			keyBindingCmd.function(c.render)
 		}
 	}
+	c.render.renderSuggestions()
 
 	return false, make([]string, 0)
 }
@@ -133,14 +135,13 @@ func (c *chooser) Run() []string {
 				clearScreen()
 				return texts
 			}
-			c.render.render()
 
 		case code := <-exitCh:
 			os.Exit(code)
 
 		case w := <-winSizeCh:
 			c.render.winSize = w
-			c.render.render()
+			c.render.renderSuggestions()
 
 		default:
 			time.Sleep(10 * time.Millisecond)
