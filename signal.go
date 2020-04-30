@@ -7,9 +7,9 @@ import (
 )
 
 func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh chan struct{}) {
-	sigCh := make(chan os.Signal, 1)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(
-		sigCh,
+		ch,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
@@ -20,7 +20,7 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh
 		select {
 		case <-stopCh:
 			return
-		case signal := <-sigCh:
+		case signal := <-ch:
 			switch signal {
 			case syscall.SIGINT:
 				exitCh <- 0

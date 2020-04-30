@@ -74,8 +74,6 @@ func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 
 func (c *chooser) response(b []byte) (bool, []string) {
 	switch key := getKey(b); key {
-	case ignore:
-		return false, make([]string, 0)
 	case displayable:
 		c.render.buffer.insert(string(b))
 		c.filter()
@@ -132,7 +130,7 @@ func (c *chooser) Run() []string {
 			if shouldExit, texts := c.response(b); shouldExit {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
-				clear()
+				clearScreen()
 				return texts
 			}
 			c.render.render()

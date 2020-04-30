@@ -35,7 +35,7 @@ func newRender() *render {
 }
 
 func (r *render) render() {
-	clear()
+	clearScreen()
 	r.renderBuffer()
 	numOfSuggestions := r.renderSuggestions()
 	r.restoreCursorPosition(numOfSuggestions)
