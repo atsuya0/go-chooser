@@ -19,6 +19,6 @@ func clearCursorEnd() string {
 }
 
 // Clear the screen.
-func clear() {
+func clearScreen() {
 	fmt.Print(setColCursor(1), clearCursorEnd())
 }
