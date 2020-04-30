@@ -17,7 +17,6 @@ const (
 )
 
 type render struct {
-	prompt     string
 	buffer     *buffer
 	completion *completion
 	// The starting index of display suggestions.
@@ -29,7 +28,6 @@ type render struct {
 
 func newRender() *render {
 	return &render{
-		prompt:        prompt,
 		buffer:        newBuffer(),
 		startingIndex: 0,
 		register:      make([]int, 0),
@@ -63,7 +61,7 @@ func (r *render) endingIndex() int {
 }
 
 func (r *render) renderBuffer() {
-	fmt.Println(r.prompt + r.buffer.text)
+	fmt.Println(prompt + r.buffer.text)
 }
 
 func (r *render) renderSuggestions() int {
@@ -98,7 +96,7 @@ func (r *render) relativePositionOfTarget() int {
 }
 
 func (r *render) cursorColPosition() int {
-	return r.buffer.cursorPosition + len(r.prompt) + 1
+	return r.buffer.cursorPosition + len(prompt) + 1
 }
 
 // cursorSymbol is the highest priority.
