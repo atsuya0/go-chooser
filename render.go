@@ -17,10 +17,12 @@ const (
 )
 
 type render struct {
-	prompt        string
-	buffer        *buffer
-	completion    *completion
-	startingPoint int // Starting point of display.
+	prompt     string
+	buffer     *buffer
+	completion *completion
+	// The starting index of display suggestions.
+	// If The number of lines suggestions is larger than the height of the screen.
+	startingIndex int
 	winSize       *winSize
 	register      []int
 }
@@ -29,7 +31,7 @@ func newRender() *render {
 	return &render{
 		prompt:        prompt,
 		buffer:        newBuffer(),
-		startingPoint: 0,
+		startingIndex: 0,
 		register:      make([]int, 0),
 	}
 }
@@ -43,20 +45,21 @@ func (r *render) render() {
 
 func (r *render) next() {
 	r.completion.next()
-	if r.endPoint() <= r.completion.target {
-		r.startingPoint += 1
+	if r.endingIndex() <= r.completion.target {
+		r.startingIndex += 1
 	}
 }
 
 func (r *render) previous() {
 	r.completion.previous()
-	if r.completion.target < r.startingPoint {
-		r.startingPoint -= 1
+	if r.completion.target < r.startingIndex {
+		r.startingIndex -= 1
 	}
 }
 
-func (r *render) endPoint() int {
-	return r.startingPoint + int(r.winSize.row) - promptHeight
+// The ending index of display suggestions.
+func (r *render) endingIndex() int {
+	return r.startingIndex + int(r.winSize.row) - promptHeight
 }
 
 func (r *render) renderBuffer() {
@@ -67,14 +70,14 @@ func (r *render) renderSuggestions() int {
 	if r.completion.target < 0 {
 		return 0
 	}
-	var suggestions []string
-	for i := r.startingPoint; i < r.endPoint() && i < r.completion.length(); i++ {
-		suggestions = append(suggestions,
+	var suggestionsToDisplay []string
+	for i := r.startingIndex; i < r.endingIndex() && i < r.completion.length(); i++ {
+		suggestionsToDisplay = append(suggestionsToDisplay,
 			r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.shortenSuggestion(r.completion.suggestions[i])))
 	}
-	fmt.Print(strings.Join(suggestions, "\n"))
+	fmt.Print(strings.Join(suggestionsToDisplay, "\n"))
 
-	return len(suggestions)
+	return len(suggestionsToDisplay)
 }
 
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
@@ -91,7 +94,7 @@ func (r *render) shortenSuggestion(suggestion string) string {
 }
 
 func (r *render) relativePositionOfTarget() int {
-	return r.completion.target - r.startingPoint
+	return r.completion.target - r.startingIndex
 }
 
 func (r *render) cursorColPosition() int {
