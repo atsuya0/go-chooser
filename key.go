@@ -42,6 +42,7 @@ const (
 
 	displayable
 	ignore
+	question
 )
 
 var keys = []*key{
@@ -74,6 +75,7 @@ var keys = []*key{
 	{id: tab, code: []byte{0x9}},
 	{id: backspace, code: []byte{0x7f}},
 	{id: delete, code: []byte{0x1b, 0x5b, 0x33, 0x7e}},
+	{id: question, code: []byte{0x3f}},
 }
 
 func getKey(b []byte) int {

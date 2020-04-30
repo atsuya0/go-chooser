@@ -34,11 +34,33 @@ func newRender() *render {
 	}
 }
 
-func (r *render) render() {
+func (r *render) render(lines []string) {
 	clearScreen()
 	r.renderBuffer()
-	numOfSuggestions := r.renderSuggestions()
-	r.restoreCursorPosition(numOfSuggestions)
+	fmt.Print(strings.Join(lines, "\n"))
+	r.restoreCursorPosition(len(lines))
+}
+
+func (r *render) renderSuggestions() {
+	var suggestionsToDisplay []string
+	for i := r.startingIndex; i < r.endingIndex() && i < r.completion.length(); i++ {
+		suggestionsToDisplay = append(suggestionsToDisplay,
+			r.shortenLine(r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.completion.suggestions[i])))
+	}
+	r.render(suggestionsToDisplay)
+}
+
+func (r *render) renderKeyBindings() {
+	var keyBindings []string
+	for _, v := range keyBindingBufferCmds {
+		keyBindings = append(keyBindings,
+			r.shortenLine(fmt.Sprintf("%s: %s", v.key, v.description)))
+	}
+	for _, v := range keyBindingRenderCmds {
+		keyBindings = append(keyBindings,
+			r.shortenLine(fmt.Sprintf("%s: %s", v.key, v.description)))
+	}
+	r.render(keyBindings)
 }
 
 func (r *render) next() {
@@ -64,31 +86,17 @@ func (r *render) renderBuffer() {
 	fmt.Println(prompt + r.buffer.text)
 }
 
-func (r *render) renderSuggestions() int {
-	if r.completion.target < 0 {
-		return 0
-	}
-	var suggestionsToDisplay []string
-	for i := r.startingIndex; i < r.endingIndex() && i < r.completion.length(); i++ {
-		suggestionsToDisplay = append(suggestionsToDisplay,
-			r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.shortenSuggestion(r.completion.suggestions[i])))
-	}
-	fmt.Print(strings.Join(suggestionsToDisplay, "\n"))
-
-	return len(suggestionsToDisplay)
-}
-
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
 	fmt.Print(cursorUp(numOfSuggestions), setColCursor(r.cursorColPosition()))
 }
 
-func (r *render) shortenSuggestion(suggestion string) string {
-	displayableWidth := int(r.winSize.col) - len(normalSymbol)
-	runeSuggestion := []rune(suggestion)
-	if len(runeSuggestion) <= displayableWidth {
-		return suggestion
+func (r *render) shortenLine(line string) string {
+	displayableWidth := int(r.winSize.col)
+	runes := []rune(line)
+	if len(runes) <= displayableWidth {
+		return line
 	}
-	return string(runeSuggestion[:displayableWidth:displayableWidth])
+	return string(runes[:displayableWidth:displayableWidth])
 }
 
 func (r *render) relativePositionOfTarget() int {
