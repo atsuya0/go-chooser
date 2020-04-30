@@ -78,11 +78,8 @@ func (c *chooser) response(b []byte) (bool, []string) {
 		c.render.buffer.insert(string(b))
 		c.filter()
 	case enter:
-		if c.render.completion.target < 0 {
-			return true, make([]string, 0)
-		}
 		if len(c.render.register) == 0 {
-			return true, []string{c.render.completion.suggestions[c.render.completion.target]}
+			return true, []string{c.render.completion.getSuggestion()}
 		}
 		var texts []string
 		for _, v := range c.render.register {
