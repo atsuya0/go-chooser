@@ -99,17 +99,13 @@ func (r *render) shortenLine(line string) string {
 	return string(runes[:displayableWidth:displayableWidth])
 }
 
-func (r *render) relativePositionOfTarget() int {
-	return r.completion.target - r.startingIndex
-}
-
 func (r *render) cursorColPosition() int {
 	return r.buffer.cursorPosition + len(prompt) + 1
 }
 
 // cursorSymbol is the highest priority.
 func (r *render) assignSymbol(i int) string {
-	if r.relativePositionOfTarget() == i {
+	if r.completion.target == i {
 		return cursorSymbol
 	}
 
@@ -130,7 +126,7 @@ func (r *render) assignFormat(i int) string {
 		}
 	}
 
-	if r.relativePositionOfTarget() == i {
+	if r.completion.target == i {
 		return cursorFormat
 	}
 

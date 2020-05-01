@@ -51,15 +51,16 @@ func (t *terminal) resetMode() error {
 
 func (t *terminal) getWinSize() *winSize {
 	ws := &ioctlWinsize{}
-	retCode, _, errno := syscall.Syscall(
+	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		uintptr(t.fd),
 		uintptr(syscall.TIOCGWINSZ),
 		uintptr(unsafe.Pointer(ws)))
 
-	if int(retCode) == -1 {
+	if errno != 0 {
 		panic(errno)
 	}
+
 	return &winSize{
 		row: ws.Row,
 		col: ws.Col,
