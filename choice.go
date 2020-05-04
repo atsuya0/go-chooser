@@ -47,14 +47,6 @@ func NewChooser(list interface{}) (*chooser, error) {
 	return &chooser{}, errors.New("expected []string or []fmt.Stringer")
 }
 
-func ToString(stringers []fmt.Stringer) []string {
-	strings := make([]string, 0, len(stringers))
-	for _, v := range stringers {
-		strings = append(strings, string(v.String()))
-	}
-	return strings
-}
-
 func (c *chooser) init() error {
 	if err := c.terminal.setup(); err != nil {
 		return err
@@ -136,7 +128,7 @@ func (c *chooser) response(b []byte) (bool, []fmt.Stringer) {
 	return false, make([]fmt.Stringer, 0)
 }
 
-func (c *chooser) Run() []fmt.Stringer {
+func (c *chooser) GetStringers() []fmt.Stringer {
 	if err := c.init(); err != nil {
 		panic(err)
 	}
@@ -176,4 +168,13 @@ func (c *chooser) Run() []fmt.Stringer {
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
+}
+
+func (c *chooser) GetStrings() []string {
+	stringers := c.GetStringers()
+	strings := make([]string, 0, len(stringers))
+	for _, v := range stringers {
+		strings = append(strings, string(v.String()))
+	}
+	return strings
 }
