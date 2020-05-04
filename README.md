@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
-	fmt.Println(choice.ToString(chooser.Run()))
+	fmt.Println(chooser.GetStrings()))
 }
 ```
 
@@ -68,6 +68,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
-	fmt.Println(chooser.Run())
+	fmt.Println(chooser.GetStringers()))
 }
 ```
