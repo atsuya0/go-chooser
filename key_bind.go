@@ -1,4 +1,4 @@
-package choice
+package chooser
 
 type keyBindingBufferCmd struct {
 	function    func(*buffer)

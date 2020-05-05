@@ -1,4 +1,4 @@
-package choice
+package chooser
 
 type completion struct {
 	target      int
