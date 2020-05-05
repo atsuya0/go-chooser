@@ -1,4 +1,4 @@
-# go-choice
+# go-chooser
 ## examples
 ```go
 package main
@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tayusa/go-choice"
+	"github.com/tayusa/go-chooser"
 )
 
 func main() {
-	chooser, err := choice.NewChooser([]string{"test9", "te11", "jfdls", "fdsaf", "daj", "fdsie", "feafii", "fdiaoeioa", "feiaofjl"})
+	chooser, err := chooser.NewChooser([]string{"test9", "te11", "jfdls", "fdsaf", "daj", "fdsie", "feafii", "fdiaoeioa", "feiaofjl"})
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
