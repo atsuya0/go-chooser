@@ -1,50 +1,28 @@
 package choice
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"time"
 )
 
-type stringer string
-
-func (s stringer) String() string {
-	return string(s)
-}
-
 type chooser struct {
 	terminal *terminal
 	render   *render
-	list     []fmt.Stringer
+	list     []string
 }
 
-func NewChooser(list interface{}) (*chooser, error) {
+func NewChooser(list []string) (*chooser, error) {
 	terminal, err := newTerminal()
 	if err != nil {
 		return &chooser{}, err
 	}
 
-	switch value := list.(type) {
-	case []string:
-		stringers := make([]fmt.Stringer, 0, len(value))
-		for _, v := range value {
-			stringers = append(stringers, stringer(v))
-		}
-		return &chooser{
-			terminal: terminal,
-			render:   newRender(),
-			list:     stringers,
-		}, nil
-	case []fmt.Stringer:
-		return &chooser{
-			terminal: terminal,
-			render:   newRender(),
-			list:     value,
-		}, nil
-	}
-	return &chooser{}, errors.New("expected []string or []fmt.Stringer")
+	return &chooser{
+		terminal: terminal,
+		render:   newRender(),
+		list:     list,
+	}, nil
 }
 
 func (c *chooser) init() error {
@@ -69,10 +47,10 @@ func (c *chooser) contains(str string) bool {
 
 // Filter the complement target.
 func (c *chooser) filter() {
-	var suggestions []fmt.Stringer
+	var suggestions []string
 	var indexes []int
 	for i, v := range c.list {
-		if c.contains(v.String()) {
+		if c.contains(v) {
 			suggestions = append(suggestions, v)
 			indexes = append(indexes, i)
 		}
@@ -94,16 +72,16 @@ func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (c *chooser) response(b []byte) (bool, []fmt.Stringer) {
+func (c *chooser) response(b []byte) (bool, []string) {
 	switch key := getKey(b); key {
 	case displayable:
 		c.render.buffer.insert(string(b))
 		c.filter()
 	case enter:
 		if len(c.render.register) == 0 {
-			return true, []fmt.Stringer{c.render.completion.getSuggestion()}
+			return true, []string{c.render.completion.getSuggestion()}
 		}
-		var list []fmt.Stringer
+		var list []string
 		for _, v := range c.render.register {
 			list = append(list, c.list[v])
 		}
@@ -111,10 +89,10 @@ func (c *chooser) response(b []byte) (bool, []fmt.Stringer) {
 	case tab:
 		c.render.updateRegister()
 	case controlC:
-		return true, make([]fmt.Stringer, 0)
+		return true, make([]string, 0)
 	case question:
 		c.render.renderKeyBindings()
-		return false, make([]fmt.Stringer, 0)
+		return false, make([]string, 0)
 	default:
 		if keyBindingCmd, ok := keyBindingBufferCmds[key]; ok {
 			keyBindingCmd.function(c.render.buffer)
@@ -125,10 +103,10 @@ func (c *chooser) response(b []byte) (bool, []fmt.Stringer) {
 	}
 	c.render.renderSuggestions()
 
-	return false, make([]fmt.Stringer, 0)
+	return false, make([]string, 0)
 }
 
-func (c *chooser) GetStringers() []fmt.Stringer {
+func (c *chooser) Run() []string {
 	if err := c.init(); err != nil {
 		panic(err)
 	}
@@ -168,13 +146,4 @@ func (c *chooser) GetStringers() []fmt.Stringer {
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
-}
-
-func (c *chooser) GetStrings() []string {
-	stringers := c.GetStringers()
-	strings := make([]string, 0, len(stringers))
-	for _, v := range stringers {
-		strings = append(strings, string(v.String()))
-	}
-	return strings
 }

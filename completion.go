@@ -1,10 +1,8 @@
 package choice
 
-import "fmt"
-
 type completion struct {
 	target      int
-	suggestions []fmt.Stringer
+	suggestions []string
 	indexes     []int
 }
 
@@ -39,14 +37,14 @@ func (c *completion) getIndex() int {
 	return c.indexes[c.target]
 }
 
-func (c *completion) getSuggestion() fmt.Stringer {
+func (c *completion) getSuggestion() string {
 	if c.target < 0 {
-		return stringer("")
+		return ""
 	}
 	return c.suggestions[c.target]
 }
 
-func newCompletion(suggestions []fmt.Stringer, indexes []int) *completion {
+func newCompletion(suggestions []string, indexes []int) *completion {
 	var idx int
 	if len(suggestions) == 0 {
 		idx = -1
