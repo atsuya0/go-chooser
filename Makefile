@@ -1,11 +1,14 @@
 test := go test -v -cover -parallel 4
 
-.PHONY: build test format
+.PHONY: install build test format
 
-build: format
+install: format
+	@go install
+
+build:
 	@go build
 
-test: format
+test:
 	@$(test)
 
 format:
