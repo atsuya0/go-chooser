@@ -2,6 +2,7 @@ package chooser
 
 import (
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -24,20 +25,22 @@ type render struct {
 	startingIndex int
 	winSize       *winSize
 	register      []int
+	out           io.Writer
 }
 
-func newRender() *render {
+func newRender(out io.Writer) *render {
 	return &render{
 		buffer:        newBuffer(),
 		startingIndex: 0,
 		register:      make([]int, 0),
+		out:           out,
 	}
 }
 
 func (r *render) render(lines []string) {
 	clearScreen()
 	r.renderBuffer()
-	fmt.Print(strings.Join(lines, "\n"))
+	fmt.Fprint(r.out, strings.Join(lines, "\n"))
 	r.restoreCursorPosition(len(lines))
 }
 
@@ -83,11 +86,11 @@ func (r *render) endingIndex() int {
 }
 
 func (r *render) renderBuffer() {
-	fmt.Println(prompt + r.buffer.text)
+	fmt.Fprintln(r.out, prompt+r.buffer.text)
 }
 
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
-	fmt.Print(cursorUp(numOfSuggestions), setColCursor(r.cursorColPosition()))
+	fmt.Fprint(r.out, cursorUp(numOfSuggestions), setColCursor(r.cursorColPosition()))
 }
 
 func (r *render) shortenLine(line string) string {

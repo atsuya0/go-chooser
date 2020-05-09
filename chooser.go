@@ -6,8 +6,15 @@ import (
 	"time"
 )
 
+type input interface {
+	read() ([]byte, error)
+	getWinSize() *winSize
+	setup() error
+	restore() error
+}
+
 type chooser struct {
-	terminal *terminal
+	terminal input
 	render   *render
 	list     []string
 }
@@ -17,10 +24,9 @@ func NewChooser(list []string) (*chooser, error) {
 	if err != nil {
 		return &chooser{}, err
 	}
-
 	return &chooser{
 		terminal: terminal,
-		render:   newRender(),
+		render:   newRender(os.Stdout),
 		list:     list,
 	}, nil
 }
