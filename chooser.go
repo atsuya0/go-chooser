@@ -24,10 +24,9 @@ func NewChooser(list []string) (*chooser, error) {
 	if err != nil {
 		return &chooser{}, err
 	}
-
 	return &chooser{
 		terminal: terminal,
-		render:   newRender(),
+		render:   newRender(os.Stdout),
 		list:     list,
 	}, nil
 }
