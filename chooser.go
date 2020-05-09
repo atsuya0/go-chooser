@@ -6,8 +6,15 @@ import (
 	"time"
 )
 
+type input interface {
+	read() ([]byte, error)
+	getWinSize() *winSize
+	setup() error
+	restore() error
+}
+
 type chooser struct {
-	terminal *terminal
+	terminal input
 	render   *render
 	list     []string
 }
