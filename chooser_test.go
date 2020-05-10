@@ -156,3 +156,66 @@ func TestChooserInputBytes(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestChooserMultipleSelection(t *testing.T) {
+	io, list, chooser := setupChooser()
+	go func() {
+		expectedValues := []string{list[0], list[2]}
+		results := chooser.Run()
+		for i, v := range results {
+			if v != expectedValues[i] {
+				t.Errorf("result %s, expected %s", v, expectedValues[i])
+			}
+		}
+	}()
+
+	if lines, err := io.readLines(); err != nil {
+		t.Error(err)
+	} else if len(lines) != len(list) {
+		t.Errorf("result %d, expected %d", len(lines), len(list))
+	}
+
+	// tab
+	if _, err := io.write([]byte{0x9}); err != nil {
+		t.Error(err)
+	}
+	// C-n
+	if _, err := io.write([]byte{0xe}); err != nil {
+		t.Error(err)
+	}
+	// C-n
+	if _, err := io.write([]byte{0xe}); err != nil {
+		t.Error(err)
+	}
+	// tab
+	if _, err := io.write([]byte{0x9}); err != nil {
+		t.Error(err)
+	}
+	// C-n
+	if lines, err := io.write([]byte{0xe}); err != nil {
+		t.Error(err)
+	} else {
+		if bool, err := regexp.MatchString(`^*`, lines[0]); err != nil {
+			t.Log(err)
+			t.Fail()
+		} else if !bool {
+			t.Errorf("'%s' does not start with *.", lines[0])
+		}
+		if bool, err := regexp.MatchString(`^*`, lines[2]); err != nil {
+			t.Log(err)
+			t.Fail()
+		} else if !bool {
+			t.Errorf("'%s' does not start with *.", lines[2])
+		}
+		if bool, err := regexp.MatchString(`^>`, lines[3]); err != nil {
+			t.Log(err)
+			t.Fail()
+		} else if !bool {
+			t.Errorf("'%s' does not start with >.", lines[3])
+		}
+	}
+	// Enter
+	if _, err := io.write([]byte{0xa}); err != nil {
+		t.Error(err)
+	}
+}
