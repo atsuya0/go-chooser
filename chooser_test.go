@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 )
@@ -95,14 +96,16 @@ func (b *ioBuf) writeString(s string) ([]string, error) {
 	return b.readLines()
 }
 
-func setupTestChooser() (ioBuf, []string, *chooser) {
+func setupTestChooser(size ...uint16) (ioBuf, []string, *chooser) {
 	io := ioBuf{
 		i: new(bytes.Buffer),
 		o: new(bytes.Buffer),
 	}
 	list := []string{"a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4"}
-	chooser := newTestChooser(io.i, io.o, list)
-	return io, list, chooser
+	if len(size) > 1 {
+		return io, list, newTestChooser(io.i, io.o, list, size...)
+	}
+	return io, list, newTestChooser(io.i, io.o, list)
 }
 
 func TestChooserInputString(t *testing.T) {
@@ -217,5 +220,35 @@ func TestChooserMultipleSelection(t *testing.T) {
 	// Enter
 	if _, err := io.write([]byte{0xa}); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestChooserScroll(t *testing.T) {
+	height := 2
+	io, list, chooser := setupTestChooser(uint16(height)+2, 100)
+	go chooser.Run()
+
+	if lines, err := io.readLines(); err != nil {
+		t.Error(err)
+	} else if len(lines) != height {
+		t.Errorf("result %d, expected %d", len(lines), height)
+	}
+	// C-n
+	if _, err := io.write([]byte{0xe}); err != nil {
+		t.Error(err)
+	}
+	// C-n
+	if _, err := io.write([]byte{0xe}); err != nil {
+		t.Error(err)
+	}
+	// C-n
+	if lines, err := io.write([]byte{0xe}); err != nil {
+		t.Error(err)
+	} else {
+		for i, line := range lines {
+			if !strings.Contains(line, list[i+height]) {
+				t.Errorf("The %s is not included in the %s.", list[i+height], line)
+			}
+		}
 	}
 }
