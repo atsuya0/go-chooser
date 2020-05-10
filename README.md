@@ -1,5 +1,5 @@
 # go-chooser
-![go-chooser](https://user-images.githubusercontent.com/37957375/81478817-a0296200-925a-11ea-8fd9-29cda0eaa79f.gif)
+![go-chooser](https://user-images.githubusercontent.com/37957375/81494359-3d2fdd80-92e3-11ea-87a3-ed5df76b8da8.gif)
 # examples
 ```go
 package main
