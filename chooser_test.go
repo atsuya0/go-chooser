@@ -95,7 +95,7 @@ func (b *ioBuf) writeString(s string) ([]string, error) {
 	return b.readLines()
 }
 
-func setupChooser() (ioBuf, []string, *chooser) {
+func setupTestChooser() (ioBuf, []string, *chooser) {
 	io := ioBuf{
 		i: new(bytes.Buffer),
 		o: new(bytes.Buffer),
@@ -106,7 +106,7 @@ func setupChooser() (ioBuf, []string, *chooser) {
 }
 
 func TestChooserInputString(t *testing.T) {
-	io, list, chooser := setupChooser()
+	io, list, chooser := setupTestChooser()
 	go chooser.Run()
 
 	if lines, err := io.readLines(); err != nil {
@@ -133,7 +133,7 @@ func TestChooserInputString(t *testing.T) {
 }
 
 func TestChooserInputBytes(t *testing.T) {
-	io, list, chooser := setupChooser()
+	io, list, chooser := setupTestChooser()
 	go func() {
 		results := chooser.Run()
 		if results[0] != list[1] {
@@ -158,7 +158,7 @@ func TestChooserInputBytes(t *testing.T) {
 }
 
 func TestChooserMultipleSelection(t *testing.T) {
-	io, list, chooser := setupChooser()
+	io, list, chooser := setupTestChooser()
 	go func() {
 		expectedValues := []string{list[0], list[2]}
 		results := chooser.Run()
