@@ -39,11 +39,15 @@ func newRender(out io.Writer, len int) *render {
 	}
 }
 
+func (r *render) print(i ...interface{}) {
+	fmt.Fprint(r.out, i...)
+}
+
 func (r *render) render(lines []string) {
-	clearScreen()
+	r.print(clearScreen())
 	lines = append([]string{r.inputField(), r.header()}, lines...)
-	fmt.Fprint(r.out, strings.Join(lines, "\n"))
-	r.restoreCursorPosition(len(lines) - 1)
+	r.print(strings.Join(lines, "\n"))
+	r.print(restoreCursorPosition(len(lines)-1, r.cursorColPosition()))
 }
 
 func (r *render) renderSuggestions() {
@@ -96,10 +100,6 @@ func (r *render) header() string {
 		return fmt.Sprintf(r.headerFormat, r.completion.length(), len(r.register))
 	}
 	return fmt.Sprintf(r.headerFormat, r.completion.length(), 0)
-}
-
-func (r *render) restoreCursorPosition(numOfSuggestions int) {
-	fmt.Fprint(r.out, cursorUp(numOfSuggestions), setColCursor(r.cursorColPosition()))
 }
 
 func (r *render) shortenLine(line string) string {
