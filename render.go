@@ -14,7 +14,7 @@ const (
 	normalFormat   = "%s"
 	cursorFormat   = "\x1b[1;37m%s\x1b[m"
 	selectedFormat = "\x1b[1;34m%s\x1b[m"
-	promptHeight   = 2
+	promptHeight   = 3
 )
 
 type render struct {
@@ -26,22 +26,24 @@ type render struct {
 	winSize       *winSize
 	register      []int
 	out           io.Writer
+	headerFormat  string
 }
 
-func newRender(out io.Writer) *render {
+func newRender(out io.Writer, len int) *render {
 	return &render{
 		buffer:        newBuffer(),
 		startingIndex: 0,
 		register:      make([]int, 0),
 		out:           out,
+		headerFormat:  fmt.Sprintf("%%d/%d (%%d)", len),
 	}
 }
 
 func (r *render) render(lines []string) {
 	clearScreen()
-	r.renderBuffer()
+	lines = append([]string{r.inputField(), r.header()}, lines...)
 	fmt.Fprint(r.out, strings.Join(lines, "\n"))
-	r.restoreCursorPosition(len(lines))
+	r.restoreCursorPosition(len(lines) - 1)
 }
 
 func (r *render) renderSuggestions() {
@@ -85,8 +87,15 @@ func (r *render) endingIndex() int {
 	return r.startingIndex + int(r.winSize.row) - promptHeight
 }
 
-func (r *render) renderBuffer() {
-	fmt.Fprintln(r.out, prompt+r.buffer.text)
+func (r *render) inputField() string {
+	return prompt + r.buffer.text
+}
+
+func (r *render) header() string {
+	if len(r.register) > 0 {
+		return fmt.Sprintf(r.headerFormat, r.completion.length(), len(r.register))
+	}
+	return fmt.Sprintf(r.headerFormat, r.completion.length(), 0)
 }
 
 func (r *render) restoreCursorPosition(numOfSuggestions int) {
