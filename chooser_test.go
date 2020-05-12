@@ -48,7 +48,7 @@ func newTestChooser(input *bytes.Buffer, output *bytes.Buffer, list []string, si
 			row: row,
 			col: col,
 		},
-		render: newRender(output),
+		render: newRender(output, len(list)),
 		list:   list,
 	}
 }
@@ -79,7 +79,7 @@ func (b *ioBuf) readLines() ([]string, error) {
 	if len(lines) == 0 {
 		return make([]string, 0), nil
 	}
-	return lines[1:], nil
+	return lines[promptHeight-1:], nil
 }
 
 func (b *ioBuf) write(bytes []byte) ([]string, error) {
@@ -224,14 +224,14 @@ func TestChooserMultipleSelection(t *testing.T) {
 }
 
 func TestChooserScroll(t *testing.T) {
-	height := 2
-	io, list, chooser := setupTestChooser(uint16(height)+2, 100)
+	numOfSuggestionsToDisplay := 2
+	io, list, chooser := setupTestChooser(promptHeight+uint16(numOfSuggestionsToDisplay), 100)
 	go chooser.Run()
 
 	if lines, err := io.readLines(); err != nil {
 		t.Error(err)
-	} else if len(lines) != height {
-		t.Errorf("result %d, expected %d", len(lines), height)
+	} else if len(lines) != numOfSuggestionsToDisplay {
+		t.Errorf("result %d, expected %d", len(lines), numOfSuggestionsToDisplay)
 	}
 	// C-n
 	if _, err := io.write([]byte{0xe}); err != nil {
@@ -246,8 +246,8 @@ func TestChooserScroll(t *testing.T) {
 		t.Error(err)
 	} else {
 		for i, line := range lines {
-			if !strings.Contains(line, list[i+height]) {
-				t.Errorf("The %s is not included in the %s.", list[i+height], line)
+			if !strings.Contains(line, list[i+numOfSuggestionsToDisplay]) {
+				t.Errorf("The %s is not included in the %s.", list[i+numOfSuggestionsToDisplay], line)
 			}
 		}
 	}
