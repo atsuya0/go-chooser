@@ -137,7 +137,7 @@ func (c *chooser) Run() []string {
 			if shouldExit, texts := c.response(b); shouldExit {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
-				clearScreen()
+				c.render.clearScreen()
 				return texts
 			}
 

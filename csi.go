@@ -16,12 +16,3 @@ func cursorForward(num int) string {
 func clearCursorEnd() string {
 	return fmt.Sprint("\x1b[J")
 }
-
-// Clear the screen.
-func clearScreen() string {
-	return cursorForward(1) + clearCursorEnd()
-}
-
-func restoreCursorPosition(row, col int) string {
-	return cursorUp(row) + cursorForward(col)
-}
