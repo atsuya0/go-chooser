@@ -39,15 +39,23 @@ func newRender(out io.Writer, len int) *render {
 	}
 }
 
+func (r *render) clearScreen() {
+	r.print(cursorForward(1) + clearCursorEnd())
+}
+
+func (r *render) restoreCursorPosition(row, col int) {
+	r.print(cursorUp(row) + cursorForward(col))
+}
+
 func (r *render) print(i ...interface{}) {
 	fmt.Fprint(r.out, i...)
 }
 
 func (r *render) render(lines []string) {
-	r.print(clearScreen())
+	r.clearScreen()
 	lines = append([]string{r.inputField(), r.header()}, lines...)
 	r.print(strings.Join(lines, "\n"))
-	r.print(restoreCursorPosition(len(lines)-1, r.cursorColPosition()))
+	r.restoreCursorPosition(len(lines)-1, r.cursorColPosition())
 }
 
 func (r *render) renderSuggestions() {
