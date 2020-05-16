@@ -26,7 +26,7 @@ func NewChooser(list []string) (*chooser, error) {
 	}
 	return &chooser{
 		terminal: terminal,
-		render:   newRender(os.Stdout, len(list)),
+		render:   newRender(os.Stderr, len(list)),
 		list:     list,
 	}, nil
 }
