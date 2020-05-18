@@ -11,7 +11,7 @@ import (
 const maxReadBytes = 1024
 
 type terminal struct {
-	originalTermios syscall.Termios
+	org syscall.Termios
 }
 
 type winSize struct {
@@ -36,7 +36,7 @@ func (t *terminal) read() ([]byte, error) {
 }
 
 func (t *terminal) setRawMode() error {
-	org := t.originalTermios
+	org := t.org
 	org.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
 	org.Cc[syscall.VTIME] = 0
 	org.Cc[syscall.VMIN] = 1
@@ -45,7 +45,7 @@ func (t *terminal) setRawMode() error {
 }
 
 func (t *terminal) resetMode() error {
-	return termios.Tcsetattr(uintptr(syscall.Stdin), termios.TCSANOW, &t.originalTermios)
+	return termios.Tcsetattr(uintptr(syscall.Stdin), termios.TCSANOW, &t.org)
 }
 
 func (t *terminal) getWinSize() *winSize {
@@ -92,5 +92,5 @@ func newTerminal() (*terminal, error) {
 		return &terminal{}, err
 	}
 
-	return &terminal{originalTermios: org}, nil
+	return &terminal{org: org}, nil
 }
