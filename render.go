@@ -7,15 +7,30 @@ import (
 )
 
 const (
-	prompt         = ">>> "
-	normalSymbol   = "  "
-	cursorSymbol   = "> "
-	selectedSymbol = "* "
-	normalFormat   = "%s"
-	cursorFormat   = "\x1b[1;37m%s\x1b[m"
-	selectedFormat = "\x1b[1;34m%s\x1b[m"
-	promptHeight   = 3
+	prompt       = ">>> "
+	promptHeight = 3
 )
+
+type symbol struct {
+	normal   string
+	cursor   string
+	selected string
+	length   int
+}
+
+func newSymbol() symbol {
+	return symbol{normal: "  ", cursor: "> ", selected: "* ", length: 2}
+}
+
+type format struct {
+	normal   string
+	cursor   string
+	selected string
+}
+
+func newFormat() format {
+	return format{normal: "%s", cursor: "\x1b[1;37m%s\x1b[m", selected: "\x1b[1;34m%s\x1b[m"}
+}
 
 type render struct {
 	buffer     *buffer
@@ -27,6 +42,8 @@ type render struct {
 	register      []int
 	out           io.Writer
 	headerFormat  string
+	symbol        symbol
+	format        format
 }
 
 func newRender(out io.Writer, len int) *render {
@@ -36,6 +53,8 @@ func newRender(out io.Writer, len int) *render {
 		register:      make([]int, 0),
 		out:           out,
 		headerFormat:  fmt.Sprintf("%%d/%d (%%d)", len),
+		symbol:        newSymbol(),
+		format:        newFormat(),
 	}
 }
 
@@ -62,7 +81,7 @@ func (r *render) renderSuggestions() {
 	var suggestionsToDisplay []string
 	for i := r.startingIndex; i < r.endingIndex() && i < r.completion.length(); i++ {
 		suggestionsToDisplay = append(suggestionsToDisplay,
-			r.shortenLine(r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.completion.suggestions[i])))
+			r.assignSymbol(i)+fmt.Sprintf(r.assignFormat(i), r.shortenLine(r.completion.suggestions[i])))
 	}
 	r.render(suggestionsToDisplay)
 }
@@ -111,7 +130,7 @@ func (r *render) header() string {
 }
 
 func (r *render) shortenLine(line string) string {
-	displayableWidth := int(r.winSize.col)
+	displayableWidth := int(r.winSize.col) - r.symbol.length
 	runes := []rune(line)
 	if len(runes) <= displayableWidth {
 		return line
@@ -126,31 +145,31 @@ func (r *render) cursorColPosition() int {
 // cursorSymbol is the highest priority.
 func (r *render) assignSymbol(i int) string {
 	if r.completion.target == i {
-		return cursorSymbol
+		return r.symbol.normal
 	}
 
 	for _, v := range r.register {
 		if v == r.completion.indexes[i] {
-			return selectedSymbol
+			return r.symbol.selected
 		}
 	}
 
-	return normalSymbol
+	return r.symbol.normal
 }
 
 // selectedFormat is the highest priority.
 func (r *render) assignFormat(i int) string {
 	for _, v := range r.register {
 		if v == r.completion.indexes[i] {
-			return selectedFormat
+			return r.format.selected
 		}
 	}
 
 	if r.completion.target == i {
-		return cursorFormat
+		return r.format.cursor
 	}
 
-	return normalFormat
+	return r.format.normal
 }
 
 func (r *render) updateRegister() {
