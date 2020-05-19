@@ -11,8 +11,7 @@ import (
 const maxReadBytes = 1024
 
 type terminal struct {
-	fd              int
-	originalTermios syscall.Termios
+	org syscall.Termios
 }
 
 type winSize struct {
@@ -29,7 +28,7 @@ type ioctlWinsize struct {
 
 func (t *terminal) read() ([]byte, error) {
 	buf := make([]byte, maxReadBytes)
-	n, err := syscall.Read(t.fd, buf)
+	n, err := syscall.Read(syscall.Stdin, buf)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -37,23 +36,23 @@ func (t *terminal) read() ([]byte, error) {
 }
 
 func (t *terminal) setRawMode() error {
-	org := t.originalTermios
+	org := t.org
 	org.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
 	org.Cc[syscall.VTIME] = 0
 	org.Cc[syscall.VMIN] = 1
 
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &org)
+	return termios.Tcsetattr(uintptr(syscall.Stdin), termios.TCSANOW, &org)
 }
 
 func (t *terminal) resetMode() error {
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.originalTermios)
+	return termios.Tcsetattr(uintptr(syscall.Stdin), termios.TCSANOW, &t.org)
 }
 
 func (t *terminal) getWinSize() *winSize {
 	ws := &ioctlWinsize{}
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
-		uintptr(t.fd),
+		uintptr(syscall.Stdin),
 		uintptr(syscall.TIOCGWINSZ),
 		uintptr(unsafe.Pointer(ws)))
 
@@ -68,7 +67,7 @@ func (t *terminal) getWinSize() *winSize {
 }
 
 func (t *terminal) setup() error {
-	if err := syscall.SetNonblock(t.fd, true); err != nil {
+	if err := syscall.SetNonblock(syscall.Stdin, true); err != nil {
 		return fmt.Errorf("Cannot set non blocking mode: %w", err)
 	}
 	if err := t.setRawMode(); err != nil {
@@ -78,7 +77,7 @@ func (t *terminal) setup() error {
 }
 
 func (t *terminal) restore() error {
-	if err := syscall.SetNonblock(t.fd, false); err != nil {
+	if err := syscall.SetNonblock(syscall.Stdin, false); err != nil {
 		return fmt.Errorf("Cannot set blocking mode: %w", err)
 	}
 	if err := t.resetMode(); err != nil {
@@ -88,18 +87,10 @@ func (t *terminal) restore() error {
 }
 
 func newTerminal() (*terminal, error) {
-	fd, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
-	if err != nil {
-		return &terminal{}, err
-	}
-
 	var org syscall.Termios
-	if err := termios.Tcgetattr(uintptr(fd), &org); err != nil {
+	if err := termios.Tcgetattr(uintptr(syscall.Stdin), &org); err != nil {
 		return &terminal{}, err
 	}
 
-	return &terminal{
-		fd:              fd,
-		originalTermios: org,
-	}, nil
+	return &terminal{org: org}, nil
 }
