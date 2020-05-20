@@ -145,7 +145,7 @@ func (r *render) cursorColPosition() int {
 // cursorSymbol is the highest priority.
 func (r *render) assignSymbol(i int) string {
 	if r.completion.target == i {
-		return r.symbol.normal
+		return r.symbol.cursor
 	}
 
 	for _, v := range r.register {
