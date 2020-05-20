@@ -144,7 +144,7 @@ func TestChooserInputString(t *testing.T) {
 func TestChooserInputBytes(t *testing.T) {
 	io, list, chooser := setupTestChooser()
 	go func() {
-		results, _ := chooser.Run()
+		_, results, _ := chooser.Run()
 		if results[0] != list[1] {
 			t.Errorf("result %s, expected %s", results[0], list[1])
 		}
@@ -170,7 +170,7 @@ func TestChooserMultipleSelection(t *testing.T) {
 	io, list, chooser := setupTestChooser()
 	go func() {
 		expectedValues := []string{list[0], list[2]}
-		results, _ := chooser.Run()
+		_, results, _ := chooser.Run()
 		for i, v := range results {
 			if v != expectedValues[i] {
 				t.Errorf("result %s, expected %s", v, expectedValues[i])
