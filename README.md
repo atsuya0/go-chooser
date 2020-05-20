@@ -20,7 +20,7 @@
 | controlN | Move the cursor to the next line. |
 | controlP | Move the cursor to the previous line. |
 
-# Examples
+# Example
 ```go
 package main
 
@@ -32,10 +32,29 @@ import (
 )
 
 func main() {
-	chooser, err := chooser.NewChooser([]string{"test9", "te11", "jfdls", "fdsaf", "daj", "fdsie", "feafii", "fdiaoeioa", "feiaofjl"})
+	chooser, err := chooser.NewChooser(
+		[]string{
+			"about five hundred yen",
+			"get to the airport",
+			"be angry with sb",
+			"play baseball",
+			"bring money",
+			"listen to Beatle’s CD",
+			"fifty cents",
+			"be dead",
+			"be not far",
+			"use a fork",
+			"pull a door",
+			"listen to music",
+			"put salt"})
 	if err != nil {
-		log.Fatalf("%+v\n", err)
+		log.Fatalf("%v\n", err)
 	}
-	fmt.Println(chooser.Run())
+	indexes, strings, err := chooser.Run()
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+	fmt.Printf("%#v\n", indexes)
+	fmt.Printf("%#v\n", indexes)
 }
 ```
