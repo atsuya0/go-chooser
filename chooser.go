@@ -82,27 +82,29 @@ func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (c *chooser) response(b []byte) (bool, []string) {
+func (c *chooser) response(b []byte) (bool, []int, []string) {
 	switch key := getKey(b); key {
 	case displayable:
 		c.render.buffer.insert(string(b))
 		c.filter()
 	case enter:
 		if len(c.render.register) == 0 {
-			return true, []string{c.render.completion.getSuggestion()}
+			return true,
+				[]int{c.render.completion.getIndex()},
+				[]string{c.render.completion.getSuggestion()}
 		}
-		var list []string
-		for _, v := range c.render.register {
-			list = append(list, c.list[v])
+		var strings []string
+		for _, index := range c.render.register {
+			strings = append(strings, c.list[index])
 		}
-		return true, list
+		return true, c.render.register, strings
 	case tab:
 		c.render.updateRegister()
 	case controlC:
-		return true, make([]string, 0)
+		return true, make([]int, 0), make([]string, 0)
 	case question:
 		c.render.renderKeyBindings()
-		return false, make([]string, 0)
+		return false, make([]int, 0), make([]string, 0)
 	default:
 		if keyBindingCmd, ok := keyBindingBufferCmds[key]; ok {
 			keyBindingCmd.function(c.render.buffer)
@@ -113,12 +115,12 @@ func (c *chooser) response(b []byte) (bool, []string) {
 	}
 	c.render.renderSuggestions()
 
-	return false, make([]string, 0)
+	return false, make([]int, 0), make([]string, 0)
 }
 
-func (c *chooser) Run() ([]string, error) {
+func (c *chooser) Run() ([]int, []string, error) {
 	if err := c.init(); err != nil {
-		return make([]string, 0), err
+		return make([]int, 0), make([]string, 0), err
 	}
 	defer func() {
 		if err := c.terminal.restore(); err != nil {
@@ -139,11 +141,11 @@ func (c *chooser) Run() ([]string, error) {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, texts := c.response(b); shouldExit {
+			if shouldExit, indexes, strings := c.response(b); shouldExit {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				c.render.clearScreen()
-				return texts, nil
+				return indexes, strings, nil
 			}
 
 		case code := <-exitCh:
@@ -154,7 +156,7 @@ func (c *chooser) Run() ([]string, error) {
 			c.render.renderSuggestions()
 
 		case err := <-errCh:
-			return make([]string, 0), err
+			return make([]int, 0), make([]string, 0), err
 
 		default:
 			time.Sleep(10 * time.Millisecond)
