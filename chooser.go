@@ -8,7 +8,7 @@ import (
 
 type input interface {
 	read() ([]byte, error)
-	getWinSize() *winSize
+	getWinSize() (*winSize, error)
 	setup() error
 	restore() error
 }
@@ -35,7 +35,11 @@ func (c *chooser) init() error {
 	if err := c.terminal.setup(); err != nil {
 		return err
 	}
-	c.render.winSize = c.terminal.getWinSize()
+	if winSize, err := c.terminal.getWinSize(); err != nil {
+		return err
+	} else {
+		c.render.winSize = winSize
+	}
 	c.filter()
 	c.render.renderSuggestions()
 	return nil
@@ -112,9 +116,9 @@ func (c *chooser) response(b []byte) (bool, []string) {
 	return false, make([]string, 0)
 }
 
-func (c *chooser) Run() []string {
+func (c *chooser) Run() ([]string, error) {
 	if err := c.init(); err != nil {
-		panic(err)
+		return make([]string, 0), err
 	}
 	defer func() {
 		if err := c.terminal.restore(); err != nil {
@@ -128,8 +132,9 @@ func (c *chooser) Run() []string {
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *winSize)
+	errCh := make(chan error)
 	stopHandleSignalCh := make(chan struct{})
-	go c.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
+	go c.handleSignals(exitCh, winSizeCh, errCh, stopHandleSignalCh)
 
 	for {
 		select {
@@ -138,7 +143,7 @@ func (c *chooser) Run() []string {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				c.render.clearScreen()
-				return texts
+				return texts, nil
 			}
 
 		case code := <-exitCh:
@@ -147,6 +152,9 @@ func (c *chooser) Run() []string {
 		case w := <-winSizeCh:
 			c.render.winSize = w
 			c.render.renderSuggestions()
+
+		case err := <-errCh:
+			return make([]string, 0), err
 
 		default:
 			time.Sleep(10 * time.Millisecond)
