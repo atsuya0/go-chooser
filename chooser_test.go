@@ -53,8 +53,12 @@ func newTestChooser(input *bytes.Buffer, output *bytes.Buffer, list []string, si
 	}
 }
 
-func compiledEscapeSequence() (*regexp.Regexp, error) {
-	return regexp.Compile("\x1b\\[[0-9]*[A-Z]")
+func compiledScreenEscapeSequence() *regexp.Regexp {
+	return regexp.MustCompile("\x1b\\[[0-9]*[A-Z]")
+}
+
+func compiledFormatEscapeSequence() *regexp.Regexp {
+	return regexp.MustCompile("\x1b\\[[0-9]*;?[0-9]*m")
 }
 
 type ioBuf struct {
@@ -63,17 +67,19 @@ type ioBuf struct {
 }
 
 func (b *ioBuf) readLines() ([]string, error) {
-	csi, err := compiledEscapeSequence()
-	if err != nil {
-		return make([]string, 0), err
-	}
 	time.Sleep(time.Millisecond * 100)
 	var lines []string
 	scanner := bufio.NewScanner(b.o)
 	for scanner.Scan() {
-		if line := csi.ReplaceAllString(scanner.Text(), ""); line != "" {
-			lines = append(lines, line)
+		line := compiledFormatEscapeSequence().ReplaceAllString(scanner.Text(), "")
+		if line == "" {
+			continue
 		}
+		line = compiledScreenEscapeSequence().ReplaceAllString(line, "")
+		if line == "" {
+			continue
+		}
+		lines = append(lines, line)
 	}
 	b.o.Reset()
 	if len(lines) == 0 {
