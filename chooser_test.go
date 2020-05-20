@@ -82,7 +82,7 @@ func (b *ioBuf) readLines() ([]string, error) {
 		lines = append(lines, line)
 	}
 	b.o.Reset()
-	if len(lines) == 0 {
+	if len(lines) <= promptHeight-1 {
 		return make([]string, 0), nil
 	}
 	return lines[promptHeight-1:], nil
