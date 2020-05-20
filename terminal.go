@@ -48,7 +48,7 @@ func (t *terminal) resetMode() error {
 	return termios.Tcsetattr(uintptr(syscall.Stdin), termios.TCSANOW, &t.org)
 }
 
-func (t *terminal) getWinSize() *winSize {
+func (t *terminal) getWinSize() (*winSize, error) {
 	ws := &ioctlWinsize{}
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -57,13 +57,13 @@ func (t *terminal) getWinSize() *winSize {
 		uintptr(unsafe.Pointer(ws)))
 
 	if errno != 0 {
-		panic(errno)
+		return &winSize{}, errno
 	}
 
 	return &winSize{
 		row: ws.Row,
 		col: ws.Col,
-	}
+	}, nil
 }
 
 func (t *terminal) setup() error {

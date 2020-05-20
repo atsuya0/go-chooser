@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh chan struct{}) {
+func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh chan error, stopCh chan struct{}) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(
 		ch,
@@ -29,7 +29,11 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, stopCh
 			case syscall.SIGQUIT:
 				exitCh <- 0
 			case syscall.SIGWINCH:
-				winSizeCh <- c.terminal.getWinSize()
+				if winSize, err := c.terminal.getWinSize(); err != nil {
+					errCh <- err
+				} else {
+					winSizeCh <- winSize
+				}
 			}
 		}
 	}

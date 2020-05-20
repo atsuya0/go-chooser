@@ -25,11 +25,11 @@ func (t *testTerminal) read() ([]byte, error) {
 	return buf[:n], nil
 }
 
-func (t *testTerminal) getWinSize() *winSize {
+func (t *testTerminal) getWinSize() (*winSize, error) {
 	return &winSize{
 		row: t.row,
 		col: t.col,
-	}
+	}, nil
 }
 
 func (t *testTerminal) setup() error   { return nil }
@@ -144,7 +144,7 @@ func TestChooserInputString(t *testing.T) {
 func TestChooserInputBytes(t *testing.T) {
 	io, list, chooser := setupTestChooser()
 	go func() {
-		results := chooser.Run()
+		results, _ := chooser.Run()
 		if results[0] != list[1] {
 			t.Errorf("result %s, expected %s", results[0], list[1])
 		}
@@ -170,7 +170,7 @@ func TestChooserMultipleSelection(t *testing.T) {
 	io, list, chooser := setupTestChooser()
 	go func() {
 		expectedValues := []string{list[0], list[2]}
-		results := chooser.Run()
+		results, _ := chooser.Run()
 		for i, v := range results {
 			if v != expectedValues[i] {
 				t.Errorf("result %s, expected %s", v, expectedValues[i])
