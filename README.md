@@ -20,7 +20,7 @@
 | controlN | Move the cursor to the next line. |
 | controlP | Move the cursor to the previous line. |
 
-# Example
+# Examples
 ```go
 package main
 
@@ -50,11 +50,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
+
 	indexes, strings, err := chooser.Run()
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
 	fmt.Printf("%#v\n", indexes)
-	fmt.Printf("%#v\n", indexes)
+	fmt.Printf("%#v\n", strings)
+
+	index, string, err := chooser.SingleRun()
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+	fmt.Printf("%#v\n", index)
+	fmt.Printf("%#v\n", string)
 }
 ```
