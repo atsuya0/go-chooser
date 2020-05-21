@@ -82,7 +82,7 @@ func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (c *chooser) response(b []byte) (bool, []int, []string) {
+func (c *chooser) response(b []byte, isMultiple bool) (bool, []int, []string) {
 	switch key := getKey(b); key {
 	case displayable:
 		c.render.buffer.insert(string(b))
@@ -99,7 +99,9 @@ func (c *chooser) response(b []byte) (bool, []int, []string) {
 		}
 		return true, c.render.register, strings
 	case tab:
-		c.render.updateRegister()
+		if isMultiple {
+			c.render.updateRegister()
+		}
 	case controlC:
 		return true, make([]int, 0), make([]string, 0)
 	case question:
@@ -141,7 +143,7 @@ func (c *chooser) Run() ([]int, []string, error) {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, indexes, strings := c.response(b); shouldExit {
+			if shouldExit, indexes, strings := c.response(b, true); shouldExit {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				c.render.clearScreen()
@@ -157,6 +159,55 @@ func (c *chooser) Run() ([]int, []string, error) {
 
 		case err := <-errCh:
 			return make([]int, 0), make([]string, 0), err
+
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+}
+
+func (c *chooser) SingleRun() (int, string, error) {
+	if err := c.init(); err != nil {
+		return -1, "", err
+	}
+	defer func() {
+		if err := c.terminal.restore(); err != nil {
+			panic(err)
+		}
+	}()
+
+	bufCh := make(chan []byte, 128)
+	stopReadBufCh := make(chan struct{})
+	go c.readBuffer(bufCh, stopReadBufCh)
+
+	exitCh := make(chan int)
+	winSizeCh := make(chan *winSize)
+	errCh := make(chan error)
+	stopHandleSignalCh := make(chan struct{})
+	go c.handleSignals(exitCh, winSizeCh, errCh, stopHandleSignalCh)
+
+	for {
+		select {
+		case b := <-bufCh:
+			if shouldExit, indexes, strings := c.response(b, false); shouldExit {
+				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
+				c.render.clearScreen()
+				if len(indexes) > 0 {
+					return indexes[0], strings[0], nil
+				}
+				return -1, "", nil
+			}
+
+		case code := <-exitCh:
+			os.Exit(code)
+
+		case w := <-winSizeCh:
+			c.render.winSize = w
+			c.render.renderSuggestions()
+
+		case err := <-errCh:
+			return -1, "", err
 
 		default:
 			time.Sleep(10 * time.Millisecond)
