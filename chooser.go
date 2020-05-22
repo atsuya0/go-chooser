@@ -101,7 +101,7 @@ func (c *chooser) response(b []byte, isMultiple bool) (bool, []int, []string) {
 	case controlC:
 		return true, make([]int, 0), make([]string, 0)
 	case question:
-		c.render.renderKeyBindings()
+		c.render.renderKeyBindings(isMultiple)
 		return false, make([]int, 0), make([]string, 0)
 	default:
 		if keyBindingCmd, ok := keyBindingBufferCmds[key]; ok {

@@ -86,13 +86,16 @@ func (r *render) renderSuggestions() {
 	r.render(suggestionsToDisplay)
 }
 
-func (r *render) renderKeyBindings() {
+func (r *render) renderKeyBindings(isMultiple bool) {
 	var keyBindings []string
 	for _, v := range keyBindingBufferCmds {
 		keyBindings = append(keyBindings,
 			r.shortenLine(fmt.Sprintf("%s: %s", v.key, v.description)))
 	}
 	for _, v := range keyBindingRenderCmds {
+		if isMultiple && v.key == "tab" {
+			continue
+		}
 		keyBindings = append(keyBindings,
 			r.shortenLine(fmt.Sprintf("%s: %s", v.key, v.description)))
 	}
