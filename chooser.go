@@ -3,6 +3,7 @@ package chooser
 import (
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -68,7 +69,8 @@ func (c *chooser) filter() {
 	c.render.completion = newCompletion(suggestions, indexes)
 }
 
-func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-stopCh:
@@ -117,6 +119,18 @@ func (c *chooser) response(b []byte, isMultiple bool) (bool, []int, []string) {
 }
 
 func (c *chooser) Run() ([]int, []string, error) {
+	return c.run(true)
+}
+
+func (c *chooser) SingleRun() (int, string, error) {
+	indexes, strings, err := c.run(false)
+	if len(indexes) == 0 || err != nil {
+		return -1, "", err
+	}
+	return indexes[0], strings[0], nil
+}
+
+func (c *chooser) run(isMultiple bool) ([]int, []string, error) {
 	if err := c.init(); err != nil {
 		return make([]int, 0), make([]string, 0), err
 	}
@@ -126,27 +140,36 @@ func (c *chooser) Run() ([]int, []string, error) {
 		}
 	}()
 
+	var wg sync.WaitGroup
+	stopCh := make(chan struct{})
+
 	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go c.readBuffer(bufCh, stopReadBufCh)
+	defer close(bufCh)
+	wg.Add(1)
+	go c.readBuffer(bufCh, stopCh, &wg)
 
 	exitCh := make(chan int)
+	defer close(exitCh)
 	winSizeCh := make(chan *winSize)
+	defer close(winSizeCh)
 	errCh := make(chan error)
-	stopHandleSignalCh := make(chan struct{})
-	go c.handleSignals(exitCh, winSizeCh, errCh, stopHandleSignalCh)
+	defer close(errCh)
+	wg.Add(1)
+	go c.handleSignals(exitCh, winSizeCh, errCh, stopCh, &wg)
 
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, indexes, strings := c.response(b, true); shouldExit {
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
+			if shouldExit, indexes, strings := c.response(b, isMultiple); shouldExit {
 				c.render.clearScreen()
+				close(stopCh)
+				wg.Wait()
 				return indexes, strings, nil
 			}
 
 		case code := <-exitCh:
+			close(stopCh)
+			wg.Wait()
 			os.Exit(code)
 
 		case w := <-winSizeCh:
@@ -155,58 +178,6 @@ func (c *chooser) Run() ([]int, []string, error) {
 
 		case err := <-errCh:
 			return make([]int, 0), make([]string, 0), err
-
-		default:
-			time.Sleep(10 * time.Millisecond)
-		}
-	}
-}
-
-func (c *chooser) SingleRun() (int, string, error) {
-	if err := c.init(); err != nil {
-		return -1, "", err
-	}
-	defer func() {
-		if err := c.terminal.restore(); err != nil {
-			panic(err)
-		}
-	}()
-
-	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go c.readBuffer(bufCh, stopReadBufCh)
-
-	exitCh := make(chan int)
-	winSizeCh := make(chan *winSize)
-	errCh := make(chan error)
-	stopHandleSignalCh := make(chan struct{})
-	go c.handleSignals(exitCh, winSizeCh, errCh, stopHandleSignalCh)
-
-	for {
-		select {
-		case b := <-bufCh:
-			if shouldExit, indexes, strings := c.response(b, false); shouldExit {
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
-				c.render.clearScreen()
-				if len(indexes) > 0 {
-					return indexes[0], strings[0], nil
-				}
-				return -1, "", nil
-			}
-
-		case code := <-exitCh:
-			os.Exit(code)
-
-		case w := <-winSizeCh:
-			c.render.winSize = w
-			c.render.renderSuggestions()
-
-		case err := <-errCh:
-			return -1, "", err
-
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
