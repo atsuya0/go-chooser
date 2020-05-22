@@ -7,7 +7,12 @@ type keyBindingBufferCmd struct {
 }
 
 type keyBindingRenderCmd struct {
-	function    func(*render)
+	function    func(*render, bool)
+	key         string
+	description string
+}
+
+type keyBindingSimpleCmd struct {
 	key         string
 	description string
 }
@@ -94,17 +99,37 @@ var keyBindingBufferCmds = map[int]keyBindingBufferCmd{
 
 var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
 	controlN: keyBindingRenderCmd{
-		function: func(r *render) {
+		function: func(r *render, _ bool) {
 			r.next()
 		},
 		key:         "controlN",
 		description: "Move the cursor to the next line.",
 	},
 	controlP: keyBindingRenderCmd{
-		function: func(r *render) {
+		function: func(r *render, _ bool) {
 			r.previous()
 		},
 		key:         "controlP",
 		description: "Move the cursor to the previous line.",
+	},
+	tab: keyBindingRenderCmd{
+		function: func(r *render, isMultiple bool) {
+			if isMultiple {
+				r.updateRegister()
+			}
+		},
+		key:         "tab",
+		description: "Store the line on the cursor.",
+	},
+}
+
+var keyBindingSimpleCmds = map[int]keyBindingSimpleCmd{
+	enter: {
+		key:         "enter",
+		description: "Choose the line on the cursor. Or choose the stored lines.",
+	},
+	controlC: {
+		key:         "controlC",
+		description: "Cancel.",
 	},
 }

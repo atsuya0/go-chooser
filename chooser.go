@@ -98,21 +98,17 @@ func (c *chooser) response(b []byte, isMultiple bool) (bool, []int, []string) {
 			strings = append(strings, c.list[index])
 		}
 		return true, c.render.register, strings
-	case tab:
-		if isMultiple {
-			c.render.updateRegister()
-		}
 	case controlC:
 		return true, make([]int, 0), make([]string, 0)
 	case question:
-		c.render.renderKeyBindings()
+		c.render.renderKeyBindings(isMultiple)
 		return false, make([]int, 0), make([]string, 0)
 	default:
 		if keyBindingCmd, ok := keyBindingBufferCmds[key]; ok {
 			keyBindingCmd.function(c.render.buffer)
 			c.filter()
 		} else if keyBindingCmd, ok := keyBindingRenderCmds[key]; ok {
-			keyBindingCmd.function(c.render)
+			keyBindingCmd.function(c.render, isMultiple)
 		}
 	}
 	c.render.renderSuggestions()
