@@ -12,6 +12,11 @@ type keyBindingRenderCmd struct {
 	description string
 }
 
+type keyBindingSimpleCmd struct {
+	key         string
+	description string
+}
+
 var keyBindingBufferCmds = map[int]keyBindingBufferCmd{
 	delete: keyBindingBufferCmd{
 		function: func(b *buffer) {
@@ -115,5 +120,16 @@ var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
 		},
 		key:         "tab",
 		description: "Store the line on the cursor.",
+	},
+}
+
+var keyBindingSimpleCmds = map[int]keyBindingSimpleCmd{
+	enter: {
+		key:         "enter",
+		description: "Choose the line on the cursor. Or choose the stored lines.",
+	},
+	controlC: {
+		key:         "controlC",
+		description: "Cancel.",
 	},
 }

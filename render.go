@@ -99,6 +99,10 @@ func (r *render) renderKeyBindings(isMultiple bool) {
 		keyBindings = append(keyBindings,
 			r.shortenLine(fmt.Sprintf("%s: %s", v.key, v.description)))
 	}
+	for _, v := range keyBindingSimpleCmds {
+		keyBindings = append(keyBindings,
+			r.shortenLine(fmt.Sprintf("%s: %s", v.key, v.description)))
+	}
 	r.render(keyBindings)
 }
 
