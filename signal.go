@@ -8,6 +8,8 @@ import (
 )
 
 func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh chan error, stopCh chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	ch := make(chan os.Signal, 1)
 	signal.Notify(
 		ch,
@@ -20,7 +22,6 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh 
 	for {
 		select {
 		case <-stopCh:
-			wg.Done()
 			return
 		case signal := <-ch:
 			switch signal {

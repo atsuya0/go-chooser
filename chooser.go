@@ -70,10 +70,10 @@ func (c *chooser) filter() {
 }
 
 func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-stopCh:
-			wg.Done()
 			return
 		default:
 			if b, err := c.terminal.read(); err == nil && !(len(b) == 1 && b[0] == 0) {
