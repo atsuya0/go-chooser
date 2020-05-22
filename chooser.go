@@ -132,12 +132,16 @@ func (c *chooser) Run() ([]int, []string, error) {
 	stopCh := make(chan struct{})
 
 	bufCh := make(chan []byte, 128)
+	defer close(bufCh)
 	wg.Add(1)
 	go c.readBuffer(bufCh, stopCh, &wg)
 
 	exitCh := make(chan int)
+	defer close(exitCh)
 	winSizeCh := make(chan *winSize)
+	defer close(winSizeCh)
 	errCh := make(chan error)
+	defer close(errCh)
 	wg.Add(1)
 	go c.handleSignals(exitCh, winSizeCh, errCh, stopCh, &wg)
 
@@ -152,6 +156,8 @@ func (c *chooser) Run() ([]int, []string, error) {
 			}
 
 		case code := <-exitCh:
+			close(stopCh)
+			wg.Wait()
 			os.Exit(code)
 
 		case w := <-winSizeCh:
@@ -178,12 +184,16 @@ func (c *chooser) SingleRun() (int, string, error) {
 	stopCh := make(chan struct{})
 
 	bufCh := make(chan []byte, 128)
+	defer close(bufCh)
 	wg.Add(1)
 	go c.readBuffer(bufCh, stopCh, &wg)
 
 	exitCh := make(chan int)
+	defer close(exitCh)
 	winSizeCh := make(chan *winSize)
+	defer close(winSizeCh)
 	errCh := make(chan error)
+	defer close(errCh)
 	wg.Add(1)
 	go c.handleSignals(exitCh, winSizeCh, errCh, stopCh, &wg)
 
@@ -201,6 +211,8 @@ func (c *chooser) SingleRun() (int, string, error) {
 			}
 
 		case code := <-exitCh:
+			close(stopCh)
+			wg.Wait()
 			os.Exit(code)
 
 		case w := <-winSizeCh:
