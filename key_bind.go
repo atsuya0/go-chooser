@@ -114,6 +114,6 @@ var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
 			}
 		},
 		key:         "tab",
-		description: "Select the line on the cursor.",
+		description: "Store the line on the cursor.",
 	},
 }
