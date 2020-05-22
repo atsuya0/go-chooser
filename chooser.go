@@ -3,6 +3,7 @@ package chooser
 import (
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -68,10 +69,11 @@ func (c *chooser) filter() {
 	c.render.completion = newCompletion(suggestions, indexes)
 }
 
-func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}, wg *sync.WaitGroup) {
 	for {
 		select {
 		case <-stopCh:
+			wg.Done()
 			return
 		default:
 			if b, err := c.terminal.read(); err == nil && !(len(b) == 1 && b[0] == 0) {
@@ -126,23 +128,26 @@ func (c *chooser) Run() ([]int, []string, error) {
 		}
 	}()
 
+	var wg sync.WaitGroup
+	stopCh := make(chan struct{})
+
 	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go c.readBuffer(bufCh, stopReadBufCh)
+	wg.Add(1)
+	go c.readBuffer(bufCh, stopCh, &wg)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *winSize)
 	errCh := make(chan error)
-	stopHandleSignalCh := make(chan struct{})
-	go c.handleSignals(exitCh, winSizeCh, errCh, stopHandleSignalCh)
+	wg.Add(1)
+	go c.handleSignals(exitCh, winSizeCh, errCh, stopCh, &wg)
 
 	for {
 		select {
 		case b := <-bufCh:
 			if shouldExit, indexes, strings := c.response(b, true); shouldExit {
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
 				c.render.clearScreen()
+				close(stopCh)
+				wg.Wait()
 				return indexes, strings, nil
 			}
 
@@ -169,23 +174,26 @@ func (c *chooser) SingleRun() (int, string, error) {
 		}
 	}()
 
+	var wg sync.WaitGroup
+	stopCh := make(chan struct{})
+
 	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go c.readBuffer(bufCh, stopReadBufCh)
+	wg.Add(1)
+	go c.readBuffer(bufCh, stopCh, &wg)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *winSize)
 	errCh := make(chan error)
-	stopHandleSignalCh := make(chan struct{})
-	go c.handleSignals(exitCh, winSizeCh, errCh, stopHandleSignalCh)
+	wg.Add(1)
+	go c.handleSignals(exitCh, winSizeCh, errCh, stopCh, &wg)
 
 	for {
 		select {
 		case b := <-bufCh:
 			if shouldExit, indexes, strings := c.response(b, false); shouldExit {
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
 				c.render.clearScreen()
+				close(stopCh)
+				wg.Wait()
 				if len(indexes) > 0 {
 					return indexes[0], strings[0], nil
 				}

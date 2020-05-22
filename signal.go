@@ -3,10 +3,11 @@ package chooser
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 )
 
-func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh chan error, stopCh chan struct{}) {
+func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh chan error, stopCh chan struct{}, wg *sync.WaitGroup) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(
 		ch,
@@ -19,6 +20,7 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh 
 	for {
 		select {
 		case <-stopCh:
+			wg.Done()
 			return
 		case signal := <-ch:
 			switch signal {
