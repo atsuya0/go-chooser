@@ -155,9 +155,6 @@ func (c *chooser) Run() ([]int, []string, error) {
 
 		case err := <-errCh:
 			return make([]int, 0), make([]string, 0), err
-
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
@@ -204,9 +201,6 @@ func (c *chooser) SingleRun() (int, string, error) {
 
 		case err := <-errCh:
 			return -1, "", err
-
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
