@@ -150,12 +150,11 @@ func (c *chooser) run(isMultiple bool) ([]int, []string, error) {
 
 	exitCh := make(chan int)
 	defer close(exitCh)
-	winSizeCh := make(chan *winSize)
-	defer close(winSizeCh)
-	errCh := make(chan error)
-	defer close(errCh)
+	winSizeCh := winSizeCh{winSize: make(chan *winSize), err: make(chan error)}
+	defer close(winSizeCh.winSize)
+	defer close(winSizeCh.err)
 	wg.Add(1)
-	go c.handleSignals(exitCh, winSizeCh, errCh, stopCh, &wg)
+	go c.handleSignals(exitCh, winSizeCh, stopCh, &wg)
 
 	for {
 		select {
@@ -172,11 +171,11 @@ func (c *chooser) run(isMultiple bool) ([]int, []string, error) {
 			wg.Wait()
 			os.Exit(code)
 
-		case w := <-winSizeCh:
+		case w := <-winSizeCh.winSize:
 			c.render.winSize = w
 			c.render.renderSuggestions()
 
-		case err := <-errCh:
+		case err := <-winSizeCh.err:
 			return make([]int, 0), make([]string, 0), err
 		}
 	}
