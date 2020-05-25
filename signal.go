@@ -7,13 +7,23 @@ import (
 	"syscall"
 )
 
+type stopCh struct {
+	wg *sync.WaitGroup
+	ch chan struct{}
+}
+
+func (c *stopCh) close() {
+	close(c.ch)
+	c.wg.Wait()
+}
+
 type winSizeCh struct {
 	winSize chan *winSize
 	err     chan error
 }
 
-func (c *chooser) handleSignals(exitCh chan int, winSizeCh winSizeCh, stopCh chan struct{}, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (c *chooser) handleSignals(exitCh chan int, winSizeCh winSizeCh, stopCh stopCh) {
+	defer stopCh.wg.Done()
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(
@@ -26,7 +36,7 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh winSizeCh, stopCh cha
 
 	for {
 		select {
-		case <-stopCh:
+		case <-stopCh.ch:
 			return
 		case signal := <-ch:
 			switch signal {

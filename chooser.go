@@ -69,11 +69,11 @@ func (c *chooser) filter() {
 	c.render.completion = newCompletion(suggestions, indexes)
 }
 
-func (c *chooser) readBuffer(bufCh chan []byte, stopCh chan struct{}, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (c *chooser) readBuffer(bufCh chan []byte, stopCh stopCh) {
+	defer stopCh.wg.Done()
 	for {
 		select {
-		case <-stopCh:
+		case <-stopCh.ch:
 			return
 		default:
 			if b, err := c.terminal.read(); err == nil && !(len(b) == 1 && b[0] == 0) {
@@ -140,35 +140,32 @@ func (c *chooser) run(isMultiple bool) ([]int, []string, error) {
 		}
 	}()
 
-	var wg sync.WaitGroup
-	stopCh := make(chan struct{})
+	stopCh := stopCh{wg: new(sync.WaitGroup), ch: make(chan struct{})}
 
 	bufCh := make(chan []byte, 128)
 	defer close(bufCh)
-	wg.Add(1)
-	go c.readBuffer(bufCh, stopCh, &wg)
+	stopCh.wg.Add(1)
+	go c.readBuffer(bufCh, stopCh)
 
 	exitCh := make(chan int)
 	defer close(exitCh)
 	winSizeCh := winSizeCh{winSize: make(chan *winSize), err: make(chan error)}
 	defer close(winSizeCh.winSize)
 	defer close(winSizeCh.err)
-	wg.Add(1)
-	go c.handleSignals(exitCh, winSizeCh, stopCh, &wg)
+	stopCh.wg.Add(1)
+	go c.handleSignals(exitCh, winSizeCh, stopCh)
 
 	for {
 		select {
 		case b := <-bufCh:
 			if shouldExit, indexes, strings := c.response(b, isMultiple); shouldExit {
 				c.render.clearScreen()
-				close(stopCh)
-				wg.Wait()
+				stopCh.close()
 				return indexes, strings, nil
 			}
 
 		case code := <-exitCh:
-			close(stopCh)
-			wg.Wait()
+			stopCh.close()
 			os.Exit(code)
 
 		case w := <-winSizeCh.winSize:
