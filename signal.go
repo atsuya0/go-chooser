@@ -7,8 +7,23 @@ import (
 	"syscall"
 )
 
-func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh chan error, stopCh chan struct{}, wg *sync.WaitGroup) {
-	defer wg.Done()
+type stopCh struct {
+	wg *sync.WaitGroup
+	ch chan struct{}
+}
+
+func (c *stopCh) close() {
+	close(c.ch)
+	c.wg.Wait()
+}
+
+type winSizeCh struct {
+	winSize chan *winSize
+	err     chan error
+}
+
+func (c *chooser) handleSignals(exitCh chan int, winSizeCh winSizeCh, stopCh stopCh) {
+	defer stopCh.wg.Done()
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(
@@ -21,7 +36,7 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh 
 
 	for {
 		select {
-		case <-stopCh:
+		case <-stopCh.ch:
 			return
 		case signal := <-ch:
 			switch signal {
@@ -33,9 +48,9 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh chan *winSize, errCh 
 				exitCh <- 0
 			case syscall.SIGWINCH:
 				if winSize, err := c.terminal.getWinSize(); err != nil {
-					errCh <- err
+					winSizeCh.err <- err
 				} else {
-					winSizeCh <- winSize
+					winSizeCh.winSize <- winSize
 				}
 			}
 		}
