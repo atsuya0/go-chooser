@@ -26,6 +26,8 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh winSizeCh, stopCh sto
 	defer stopCh.wg.Done()
 
 	ch := make(chan os.Signal, 1)
+	defer signal.Stop(ch)
+	defer close(ch)
 	signal.Notify(
 		ch,
 		syscall.SIGINT,
