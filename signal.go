@@ -42,12 +42,10 @@ func (c *chooser) handleSignals(exitCh chan int, winSizeCh winSizeCh, stopCh sto
 			return
 		case signal := <-ch:
 			switch signal {
-			case syscall.SIGINT:
+			case syscall.SIGINT, syscall.SIGQUIT:
 				exitCh <- 0
 			case syscall.SIGTERM:
 				exitCh <- 1
-			case syscall.SIGQUIT:
-				exitCh <- 0
 			case syscall.SIGWINCH:
 				if winSize, err := c.terminal.getWinSize(); err != nil {
 					winSizeCh.err <- err
