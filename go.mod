@@ -1,4 +1,4 @@
-module github.com/tayusa/go-chooser
+module github.com/tayusa/go-chooser/v1
 
 go 1.14
 
