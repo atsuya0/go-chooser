@@ -6,19 +6,20 @@
 | --- | ----------- |
 | Enter | Returns the character string under the cursor. Or returns the selected character string. |
 | Tab | Select the character string under the cursor. |
-| delete | Delete a character under cursor. |
-| controlD | Delete a character under cursor. |
-| backspace | Delete a character before cursor. |
-| controlH | Delete a character before cursor. |
-| controlF | Move forward a character. |
-| controlB | Move backward a character. |
-| controlA | Go to the beginning of the line. |
-| controlE | Go to the end of the line. |
-| controlU | Kill characters from cursor current position to the beginning of the line. |
-| controlK | Kill characters from cursor current position to the end of the line. |
-| controlW | Delete before a word. |
-| controlN | Move the cursor to the next line. |
-| controlP | Move the cursor to the previous line. |
+| Backspace | Delete a character before cursor. |
+| Delete | Delete a character under cursor. |
+| C-d | Delete a character under cursor. |
+| C-h | Delete a character before cursor. |
+| C-f | Move forward a character. |
+| C-b | Move backward a character. |
+| C-a | Go to the beginning of the line. |
+| C-e | Go to the end of the line. |
+| C-u | Kill characters from cursor current position to the beginning of the line. |
+| C-k | Kill characters from cursor current position to the end of the line. |
+| C-w | Delete before a word. |
+| C-n | Move the cursor to the next line. |
+| C-p | Move the cursor to the previous line. |
+| ? | Display the key bindings. |
 
 # Examples
 ```go
