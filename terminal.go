@@ -6,12 +6,13 @@ import (
 	"unsafe"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 const maxReadBytes = 1024
 
 type terminal struct {
-	org syscall.Termios
+	org unix.Termios
 }
 
 type winSize struct {
@@ -87,7 +88,7 @@ func (t *terminal) restore() error {
 }
 
 func newTerminal() (*terminal, error) {
-	var org syscall.Termios
+	var org unix.Termios
 	if err := termios.Tcgetattr(uintptr(syscall.Stdin), &org); err != nil {
 		return &terminal{}, err
 	}
