@@ -29,7 +29,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tayusa/go-chooser"
+	"github.com/atsuya0/go-chooser"
 )
 
 func main() {
