@@ -1,4 +1,4 @@
-module github.com/tayusa/go-chooser
+module github.com/atsuya0/go-chooser
 
 go 1.16
 
