@@ -1,23 +1,23 @@
 package chooser
 
-type keyBindingBufferCmd struct {
+type bufferKeyBindingCmd struct {
 	function    func(*buffer)
 	key         string
 	description string
 }
 
-type keyBindingRenderCmd struct {
+type renderKeyBindingCmd struct {
 	function    func(*render, bool)
 	key         string
 	description string
 }
 
-type keyBindingSimpleCmd struct {
+type keyBindingCmd struct {
 	key         string
 	description string
 }
 
-var keyBindingBufferCmds = map[int]keyBindingBufferCmd{
+var bufferKeyBindingCmds = map[int]bufferKeyBindingCmd{
 	delete: {
 		function: func(b *buffer) {
 			b.deleteCharOnCursor()
@@ -97,7 +97,7 @@ var keyBindingBufferCmds = map[int]keyBindingBufferCmd{
 	},
 }
 
-var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
+var renderKeyBindingCmds = map[int]renderKeyBindingCmd{
 	controlN: {
 		function: func(r *render, _ bool) {
 			r.next()
@@ -123,7 +123,7 @@ var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
 	},
 }
 
-var keyBindingSimpleCmds = map[int]keyBindingSimpleCmd{
+var keyBindingCmds = map[int]keyBindingCmd{
 	enter: {
 		key:         "enter",
 		description: "Choose the line on the cursor. Or choose the stored lines.",
