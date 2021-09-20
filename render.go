@@ -37,24 +37,24 @@ type render struct {
 	completion *completion
 	// The starting index of display suggestions.
 	// If The number of lines suggestions is larger than the height of the screen.
-	startingIndex int
-	winSize       *winSize
-	register      []int
-	out           io.Writer
-	headerFormat  string
-	symbol        symbol
-	format        format
+	startingIndex   int
+	winSize         *winSize
+	heldCompletions []int
+	out             io.Writer
+	headerFormat    string
+	symbol          symbol
+	format          format
 }
 
 func newRender(out io.Writer, len int) *render {
 	return &render{
-		buffer:        newBuffer(),
-		startingIndex: 0,
-		register:      make([]int, 0),
-		out:           out,
-		headerFormat:  fmt.Sprintf("%%d/%d (%%d)", len),
-		symbol:        newSymbol(),
-		format:        newFormat(),
+		buffer:          newBuffer(),
+		startingIndex:   0,
+		heldCompletions: make([]int, 0),
+		out:             out,
+		headerFormat:    fmt.Sprintf("%%d/%d (%%d)", len),
+		symbol:          newSymbol(),
+		format:          newFormat(),
 	}
 }
 
@@ -130,8 +130,8 @@ func (r *render) inputField() string {
 }
 
 func (r *render) header() string {
-	if len(r.register) > 0 {
-		return fmt.Sprintf(r.headerFormat, r.completion.length(), len(r.register))
+	if len(r.heldCompletions) > 0 {
+		return fmt.Sprintf(r.headerFormat, r.completion.length(), len(r.heldCompletions))
 	}
 	return fmt.Sprintf(r.headerFormat, r.completion.length(), 0)
 }
@@ -155,7 +155,7 @@ func (r *render) assignSymbol(i int) string {
 		return r.symbol.cursor
 	}
 
-	for _, v := range r.register {
+	for _, v := range r.heldCompletions {
 		if v == r.completion.indexes[i] {
 			return r.symbol.selected
 		}
@@ -166,7 +166,7 @@ func (r *render) assignSymbol(i int) string {
 
 // selectedFormat is the highest priority.
 func (r *render) assignFormat(i int) string {
-	for _, v := range r.register {
+	for _, v := range r.heldCompletions {
 		if v == r.completion.indexes[i] {
 			return r.format.selected
 		}
@@ -179,16 +179,17 @@ func (r *render) assignFormat(i int) string {
 	return r.format.normal
 }
 
-func (r *render) updateRegister() {
+func (r *render) holdCompletion() {
 	index := r.completion.getIndex()
 	if index < 0 {
 		return
 	}
-	for i, v := range r.register {
+	for i, v := range r.heldCompletions {
 		if v == index {
-			r.register = append(r.register[:i:i], r.register[i+1:]...)
+			r.heldCompletions = append(r.heldCompletions[:i:i], r.heldCompletions[i+1:]...)
 			return
 		}
 	}
-	r.register = append(r.register, r.completion.indexes[r.completion.target])
+	r.heldCompletions = append(r.heldCompletions, r.completion.indexes[r.completion.target])
+	r.next()
 }

@@ -90,16 +90,16 @@ func (c *chooser) response(b []byte, isMultiple bool) (bool, []int, []string) {
 		c.render.buffer.insert(string(b))
 		c.filter()
 	case enter:
-		if len(c.render.register) == 0 {
+		if len(c.render.heldCompletions) == 0 {
 			return true,
 				[]int{c.render.completion.getIndex()},
 				[]string{c.render.completion.getSuggestion()}
 		}
 		var strings []string
-		for _, index := range c.render.register {
+		for _, index := range c.render.heldCompletions {
 			strings = append(strings, c.list[index])
 		}
-		return true, c.render.register, strings
+		return true, c.render.heldCompletions, strings
 	case controlC:
 		return true, make([]int, 0), make([]string, 0)
 	case question:

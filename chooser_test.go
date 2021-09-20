@@ -192,16 +192,8 @@ func TestChooserMultipleSelection(t *testing.T) {
 	if _, err := io.write([]byte{0xe}); err != nil {
 		t.Error(err)
 	}
-	// C-n
-	if _, err := io.write([]byte{0xe}); err != nil {
-		t.Error(err)
-	}
 	// tab
-	if _, err := io.write([]byte{0x9}); err != nil {
-		t.Error(err)
-	}
-	// C-n
-	if lines, err := io.write([]byte{0xe}); err != nil {
+	if lines, err := io.write([]byte{0x9}); err != nil {
 		t.Error(err)
 	} else {
 		if bool, err := regexp.MatchString(`^*`, lines[0]); err != nil {

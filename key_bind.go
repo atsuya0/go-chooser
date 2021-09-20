@@ -115,7 +115,7 @@ var keyBindingRenderCmds = map[int]keyBindingRenderCmd{
 	tab: keyBindingRenderCmd{
 		function: func(r *render, isMultiple bool) {
 			if isMultiple {
-				r.updateRegister()
+				r.holdCompletion()
 			}
 		},
 		key:         "tab",
