@@ -191,4 +191,5 @@ func (r *render) holdCompletion() {
 		}
 	}
 	r.heldCompletions = append(r.heldCompletions, r.completion.indexes[r.completion.target])
+	r.next()
 }
