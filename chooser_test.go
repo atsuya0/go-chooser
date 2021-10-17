@@ -82,10 +82,10 @@ func (b *ioBuf) readLines() ([]string, error) {
 		lines = append(lines, line)
 	}
 	b.o.Reset()
-	if len(lines) <= promptHeight-1 {
+	if len(lines) <= fixedDisplayAreaHeight-1 {
 		return make([]string, 0), nil
 	}
-	return lines[promptHeight-1:], nil
+	return lines[fixedDisplayAreaHeight-1:], nil
 }
 
 func (b *ioBuf) write(bytes []byte) ([]string, error) {
@@ -223,7 +223,7 @@ func TestChooserMultipleSelection(t *testing.T) {
 
 func TestChooserScroll(t *testing.T) {
 	numOfSuggestionsToDisplay := 2
-	io, list, chooser := setupTestChooser(promptHeight+uint16(numOfSuggestionsToDisplay), 100)
+	io, list, chooser := setupTestChooser(fixedDisplayAreaHeight+uint16(numOfSuggestionsToDisplay), 100)
 	go chooser.Run()
 
 	if lines, err := io.readLines(); err != nil {

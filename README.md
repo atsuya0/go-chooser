@@ -1,5 +1,5 @@
 # go-chooser
-![go-chooser](https://user-images.githubusercontent.com/37957375/121050995-0a149200-c7f4-11eb-8a6e-c885c3ae80a5.gif)
+![gif](https://user-images.githubusercontent.com/37957375/137615673-fbef9b43-69df-42ed-a76c-c448624d8c29.gif)
 
 # Key bindings
 | key | description |

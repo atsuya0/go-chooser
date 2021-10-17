@@ -7,9 +7,20 @@ import (
 )
 
 const (
-	prompt       = ">>> "
-	promptHeight = 3
+	fixedDisplayAreaHeight = 3
 )
+
+type prompt struct {
+	text   string
+	length int
+}
+
+func newPrompt(text string) prompt {
+	return prompt{
+		text:   fmt.Sprintf("\x1b[1;34m%s\x1b[m ", text),
+		length: len(text) + 1,
+	}
+}
 
 type symbol struct {
 	normal   string
@@ -44,6 +55,7 @@ type render struct {
 	headerFormat    string
 	symbol          symbol
 	format          format
+	prompt          prompt
 }
 
 func newRender(out io.Writer, len int) *render {
@@ -52,9 +64,10 @@ func newRender(out io.Writer, len int) *render {
 		startingIndex:   0,
 		heldCompletions: make([]int, 0),
 		out:             out,
-		headerFormat:    fmt.Sprintf("%%d/%d (%%d)", len),
+		headerFormat:    fmt.Sprintf("\x1b[32m%%d/%d (%%d)\x1b[m", len),
 		symbol:          newSymbol(),
 		format:          newFormat(),
+		prompt:          newPrompt(">>>"),
 	}
 }
 
@@ -122,11 +135,11 @@ func (r *render) previous() {
 
 // The ending index of display suggestions.
 func (r *render) endingIndex() int {
-	return r.startingIndex + int(r.winSize.row) - promptHeight
+	return r.startingIndex + int(r.winSize.row) - fixedDisplayAreaHeight
 }
 
 func (r *render) inputField() string {
-	return prompt + r.buffer.text
+	return r.prompt.text + r.buffer.text
 }
 
 func (r *render) header() string {
@@ -146,7 +159,7 @@ func (r *render) shortenLine(line string) string {
 }
 
 func (r *render) cursorColPosition() int {
-	return r.buffer.cursorPosition + len(prompt) + 1
+	return r.buffer.cursorPosition + r.prompt.length + 1
 }
 
 // cursorSymbol is the highest priority.
