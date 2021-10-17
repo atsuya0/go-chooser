@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	promptHeight = 3
+	fixedDisplayAreaHeight = 3
 )
 
 type prompt struct {
@@ -135,7 +135,7 @@ func (r *render) previous() {
 
 // The ending index of display suggestions.
 func (r *render) endingIndex() int {
-	return r.startingIndex + int(r.winSize.row) - promptHeight
+	return r.startingIndex + int(r.winSize.row) - fixedDisplayAreaHeight
 }
 
 func (r *render) inputField() string {
